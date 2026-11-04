@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", "lib": ["ES2020", "DOM"], "noEmit": true,
+    "strict": false, "noImplicitAny": false, "skipLibCheck": true,
+    "allowUnreachableCode": true, "allowUnusedLabels": true
+  },
+  "include": ["src/**/*.ts"]
+}

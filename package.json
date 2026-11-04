@@ -1,0 +1,24 @@
+{
+  "name": "hegemonia",
+  "productName": "Hegemonía",
+  "version": "0.2.0",
+  "description": "Juego de conquista de territorios sobre el mapa de la Tierra",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "web": "node server/server.js",
+    "build": "node tools/build.mjs --check",
+    "test": "node tools/test-sim.mjs",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "com.juc.hegemonia",
+    "productName": "Hegemonía",
+    "files": ["index.html", "css/**", "dist/**", "assets/**", "electron/**", "package.json"],
+    "win": { "target": "nsis" }
+  }
+}

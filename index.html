@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hegemonía</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/style.css?v=7">
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="danger"></div>
+
+<div id="top" class="panel" hidden>
+  <h1><i id="myColor"></i><span id="pname">Reino</span></h1>
+  <div class="res">
+    <span class="ic">{{troops}}</span><b id="hTroops">0</b><small id="hGrow">+0/s</small>
+    <div class="meter"><div id="hMeter"></div></div>
+    <span class="ic">{{gold}}</span><b id="hGold">0</b><small id="hInc">+0/s</small>
+    <span class="ic">{{land}}</span><b id="hLand">0%</b><small id="hRank">#1</small>
+  </div>
+  <div class="tax"><span class="lbl">{{tax}} Impuestos <b id="taxV" class="num">10%</b></span>
+    <input id="tax" type="range" min="0" max="80" step="5" value="10" aria-label="Tasa de impuestos">
+    <div class="hap" title="Felicidad del pueblo: con menos de 50 baja la economía; con menos de 25 hay revueltas"><span id="hapE">{{f2}}</span><div class="meter"><div id="hapM"></div></div><b id="hapV" class="num">80</b></div></div>
+  <div id="mats" class="mats" title="Materiales almacenados en minas, aserraderos, granjas y bancos"></div>
+  <div id="wars"></div>
+</div>
+
+<div id="board" class="panel" hidden><h2><span>{{board}} Potencias</span><span class="num" id="aliveN"></span></h2><ol id="boardList"></ol></div>
+
+<div id="send" class="panel" hidden>
+  <div class="sh"><span>{{attack}} Tropas al atacar</span><b id="ratioV" class="num">30%</b></div>
+  <input id="ratio" type="range" min="5" max="100" step="5" value="30" aria-label="Porcentaje de tropas a enviar">
+  <div class="presets"><button type="button" class="btn" data-r="10">10%</button><button type="button" class="btn" data-r="25">25%</button><button type="button" class="btn" data-r="50">50%</button><button type="button" class="btn" data-r="75">75%</button><button type="button" class="btn" data-r="100">Todas</button></div>
+  <div class="sn">≈ <b id="ratioN" class="num">0</b> tropas por ataque <kbd>Q</kbd><kbd>E</kbd></div>
+</div>
+
+<div id="dock" class="panel" hidden>
+  <div class="grp-w"><div class="gl">Construir</div><div class="grp" id="bld"></div></div>
+  <div class="sep"></div>
+  <div class="grp-w"><div class="gl">Armamento</div><div class="grp" id="weap"></div></div>
+  <div class="sep"></div>
+  <div class="grp-w"><div class="gl">Diplomacia</div><div class="grp"><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button></div></div>
+</div>
+
+<div id="side" hidden>
+  <div class="tools">
+    <button class="btn" id="spdBtn" type="button" title="Velocidad">{{speed}} 1x</button>
+    <button class="btn" id="pauseBtn" type="button" title="Pausa (espacio)">{{pause}}</button>
+    <button class="btn" id="sndBtn" type="button" title="Sonido">{{snd_on}}</button>
+    <button class="btn" id="saveBtn" type="button" title="Guardar partida en un archivo">{{save}}</button>
+    <button class="btn" id="loadBtn" type="button" title="Cargar una partida guardada">{{load}}</button>
+    <button class="btn" id="boardBtn" type="button" title="Potencias">{{board}}</button>
+    <button class="btn" id="helpBtn" type="button" title="Ayuda">{{help}}</button>
+  </div>
+  <div class="tools"><button class="btn" id="zin" type="button" aria-label="Acercar">＋</button><button class="btn" id="zout" type="button" aria-label="Alejar">－</button><button class="btn" id="home" type="button" title="Ir a mi reino">{{home}}</button></div>
+  <canvas id="mini" width="400" height="158"></canvas>
+</div>
+
+<div id="log"></div>
+<div id="tip" hidden></div>
+<div id="hint" hidden>Toca tierra libre para fundar tu reino</div>
+<div id="prop" class="panel" hidden></div>
+<div id="dip" class="panel" hidden></div>
+
+<div id="overlay"><div class="box" id="obox">
+  <h1>Hegemonía</h1>
+  <p class="sub">Conquista el mundo casilla a casilla. Expándete por tierra libre, construye tu economía, firma pactos y, cuando llegue el momento, lanza tus misiles.</p>
+  <div class="f">
+    <label for="nameIn">Tu reino<input id="nameIn" maxlength="18" value="Reino de juc"></label>
+    <label for="botsIn">Rivales<select id="botsIn"><option value="25">25 reinos</option><option value="45" selected>45 reinos</option><option value="70">70 reinos</option></select></label>
+    <label for="diffIn">Dificultad<select id="diffIn"><option value="0.7">Fácil</option><option value="1" selected>Normal</option><option value="1.35">Difícil</option></select></label>
+  </div>
+  <button class="go" id="startBtn" type="button" disabled>Cargando mapa…</button>
+  <button class="btn go2" id="loadStartBtn" type="button" disabled>{{load}} Cargar partida guardada</button>
+  <input id="loadFile" type="file" accept=".json,application/json" hidden>
+</div></div>
+<script src="dist/game.js?v=17"></script>
+</body>
+</html>

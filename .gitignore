@@ -1,0 +1,9 @@
+﻿node_modules/
+*.zip
+tools/node-v*/
+tools/build/
+_old_js/
+out/
+release/
+.env
+Thumbs.db
