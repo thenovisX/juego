@@ -6,7 +6,7 @@
 <title>Hegemonía</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 <canvas id="cv"></canvas>
@@ -37,11 +37,19 @@
 </div>
 
 <div id="dock" class="panel" hidden>
-  <div class="grp-w"><div class="gl">Construir</div><div class="grp" id="bld"></div></div>
-  <div class="sep"></div>
-  <div class="grp-w"><div class="gl">Armamento</div><div class="grp" id="weap"></div></div>
-  <div class="sep"></div>
-  <div class="grp-w"><div class="gl">Diplomacia</div><div class="grp"><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button></div></div>
+  <div class="tabs" role="tablist" aria-label="Categorías">
+    <button class="tab on" type="button" role="tab" data-tab="eco">{{city}} Economía</button>
+    <button class="tab" type="button" role="tab" data-tab="def">{{fort}} Defensa</button>
+    <button class="tab" type="button" role="tab" data-tab="weap">{{missile}} Armamento</button>
+    <button class="tab" type="button" role="tab" data-tab="dip">{{ally}} Diplomacia</button>
+    <span class="tabhint">Elige y toca tu territorio · <kbd>Mayús</kbd> varios</span>
+  </div>
+  <div class="pages">
+    <div class="grp page" id="pg_eco" data-page="eco" role="tabpanel"></div>
+    <div class="grp page" id="pg_def" data-page="def" role="tabpanel" hidden></div>
+    <div class="grp page" id="weap" data-page="weap" role="tabpanel" hidden></div>
+    <div class="grp page" id="pg_dip" data-page="dip" role="tabpanel" hidden><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button><p class="dipnote">Toca un reino en el mapa o en la lista de potencias para ofrecer pactos, comercio y regalos.</p></div>
+  </div>
 </div>
 
 <div id="side" hidden>
@@ -65,7 +73,9 @@
 <div id="dip" class="panel" hidden></div>
 
 <div id="overlay"><div class="box" id="obox">
+  <div class="crest" aria-hidden="true">{{crown}}</div>
   <h1>Hegemonía</h1>
+  <div class="rule"><span></span><i>✦</i><span></span></div>
   <p class="sub">Conquista el mundo casilla a casilla. Expándete por tierra libre, construye tu economía, firma pactos y, cuando llegue el momento, lanza tus misiles.</p>
   <div class="f">
     <label for="nameIn">Tu reino<input id="nameIn" maxlength="18" value="Reino de juc"></label>
@@ -76,6 +86,6 @@
   <button class="btn go2" id="loadStartBtn" type="button" disabled>{{load}} Cargar partida guardada</button>
   <input id="loadFile" type="file" accept=".json,application/json" hidden>
 </div></div>
-<script src="dist/game.js?v=17"></script>
+<script src="dist/game.js?v=18"></script>
 </body>
 </html>

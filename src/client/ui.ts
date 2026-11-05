@@ -101,10 +101,14 @@ ratioEl.oninput();
 const taxEl=document.getElementById("tax");
 taxEl.oninput=()=>{ if(me) me.tax=+taxEl.value; document.getElementById("taxV").textContent=taxEl.value+"%"; };
 taxEl.addEventListener("pointerup",()=>taxEl.blur()); taxEl.addEventListener("change",()=>taxEl.blur());
-const bldEl=document.getElementById("bld"), weapEl=document.getElementById("weap");
+const weapEl=document.getElementById("weap");
+const TAB_OF={city:"eco",mine:"eco",foundry:"eco",port:"eco",airport:"eco",sawmill:"eco",farm:"eco",bank:"eco",station:"eco",fort:"def",sam:"def",silo:"def"};
+const pageEl=k=>document.querySelector(`#dock [data-page="${k}"]`);
+function showTab(k){ document.querySelectorAll("#dock .tab").forEach(t=>{ const on=t.dataset.tab===k; t.classList.toggle("on",on); t.setAttribute("aria-selected",on); }); document.querySelectorAll("#dock .page").forEach(p=>p.hidden=p.dataset.page!==k); }
+document.querySelectorAll("#dock .tab").forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
 function mkCard(parent,id,e,label,key,title,onclick,cls){ const b=document.createElement("button"); b.type="button"; b.className="btn card"+(cls?" "+cls:""); b.id=id; b.title=title;
   b.innerHTML=`<kbd>${key}</kbd><span class="em">${e}</span><span class="lb">${label}</span><span class="co" id="${id}_c"></span>`; b.onclick=onclick; parent.appendChild(b); }
-for(const t in BT) mkCard(bldEl,"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+matText(t),()=>toggleMode({k:"build",t}));
+for(const t in BT) mkCard(pageEl(TAB_OF[t]||"eco"),"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+matText(t),()=>toggleMode({k:"build",t}));
 for(const t in WEAP) mkCard(weapEl,"w_"+t,WEAP[t].e,WEAP[t].n,WEAP[t].key,WEAP[t].desc,()=>toggleMode({k:"weap",t}),"weap");
 mkCard(weapEl,"w_ship","{{wship}}","Buque","B","Buque de guerra: patrulla desde tu puerto, intercepta cargueros enemigos y se queda su oro",()=>{ const why=buyWarship(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); selShip=wships.filter(w=>w.owner===me.id).pop(); setMode({k:"patrol"}); log("{{wship}} Buque de guerra botado. Toca el punto del mar donde quieres que patrulle: se quedará por esa zona y cañoneará a los cargueros enemigos que entren."); } },"weap");
 mkCard(weapEl,"w_patrol","{{wship}}","Zona de patrulla","Z","Elige un buque de guerra (tócalo) y luego el punto del mar donde debe quedarse patrullando",()=>toggleMode({k:"patrol"}),"weap");
@@ -113,6 +117,7 @@ document.getElementById("dipBtn").onclick=()=>toggleMode({k:"dip"});
 const sameMode=(a,b)=>!!a&&!!b&&a.k===b.k&&a.t===b.t;
 function toggleMode(m){ setMode(sameMode(mode,m)?null:m); }
 function setMode(m){ mode=m;
+  if(m){ const k=m.k==="build"?(TAB_OF[m.t]||"eco"):m.k==="dip"?"dip":"weap"; showTab(k); }
   for(const t in BT) document.getElementById("b_"+t).classList.toggle("on",sameMode(m,{k:"build",t}));
   for(const t in WEAP) document.getElementById("w_"+t).classList.toggle("on",sameMode(m,{k:"weap",t}));
   document.getElementById("dipBtn").classList.toggle("on",!!m&&m.k==="dip"); document.getElementById("w_patrol").classList.toggle("on",!!m&&m.k==="patrol");
