@@ -101,7 +101,7 @@ function updateRatioN(){ document.getElementById("ratioN").textContent=me?fmt(Ma
 document.querySelectorAll("#send .presets .btn").forEach(b=>b.onclick=()=>{ ratioEl.value=b.dataset.r; ratioEl.oninput(); });
 ratioEl.oninput();
 const taxEl=document.getElementById("tax");
-taxEl.oninput=()=>{ if(me) me.tax=+taxEl.value; document.getElementById("taxV").textContent=taxEl.value+"%"; };
+taxEl.oninput=()=>{ if(me) setTax(me,+taxEl.value); document.getElementById("taxV").textContent=taxEl.value+"%"; };
 taxEl.addEventListener("pointerup",()=>taxEl.blur()); taxEl.addEventListener("change",()=>taxEl.blur());
 const panesEl=document.getElementById("panes"), tabsEl=document.getElementById("dtabs"), infoEl=document.getElementById("dinfo");
 let curCat="eco";
@@ -353,8 +353,8 @@ function endGame(win){
   const ov=document.getElementById("overlay"), box=document.getElementById("obox");
   const secs=Math.floor((tick-me.st.born)/10), mm=Math.floor(secs/60), ss=String(secs%60).padStart(2,"0");
   const alive=players.filter(p=>p.alive).length, killer=me.st.killer>=0?players[me.st.killer].name:null;
-  box.innerHTML=`<h1 class="${win?"":"lose"}">${win?"{{crown}} Hegemonía":"Tu reino ha caído"}</h1>
-    <p class="sub">${win?`Controlas el ${(me.tiles/landTotal*100).toFixed(0)}% del mundo. Ningún reino puede hacerte frente.`:killer?`<b>${esc(killer)}</b> conquistó tus últimas tierras.`:"Tus últimas tierras se perdieron."}</p>
+  box.innerHTML=`<h1 class="${win?"":"lose"}">${win?"{{crown}} Hegemonía":netWinner>=0?"Partida terminada":"Tu reino ha caído"}</h1>
+    <p class="sub">${win?`Controlas el ${(me.tiles/landTotal*100).toFixed(0)}% del mundo. Ningún reino puede hacerte frente.`:netWinner>=0?`<b>${esc(players[netWinner].name)}</b> controla el ${(players[netWinner].tiles/landTotal*100).toFixed(0)}% del mundo y gana la partida.`:killer?`<b>${esc(killer)}</b> conquistó tus últimas tierras.`:"Tus últimas tierras se perdieron."}</p>
     <div class="stats">
       <div><span>{{time}} Tiempo</span><b>${mm}:${ss}</b></div>
       <div><span>{{medal}} Puesto final</span><b>${win?1:alive+1}º de ${players.length}</b></div>
@@ -364,7 +364,7 @@ function endGame(win){
       <div><span>{{silo}} Bombas lanzadas</span><b>${me.st.bombs}</b></div>
     </div>
     <button class="go" type="button" id="againBtn">Jugar otra vez</button>
-    ${win?"":`<button class="btn go2" type="button" id="specBtn">{{eye}} Seguir viendo la partida</button>`}`;
+    ${win||netWinner>=0?"":`<button class="btn go2" type="button" id="specBtn">{{eye}} Seguir viendo la partida</button>`}`;
   ov.hidden=false;
   document.getElementById("againBtn").onclick=()=>location.reload();
   const sb=document.getElementById("specBtn"); if(sb) sb.onclick=()=>{ spectating=true; ov.hidden=true; };

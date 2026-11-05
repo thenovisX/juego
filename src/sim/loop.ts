@@ -11,11 +11,14 @@ function stepDiplomacy(){
     if(r.trade){ addOp(a,b,0.15); addOp(b,a,0.15); } }
 }
 function gameTick(){
-  if(!started || !spawned || paused || (over && !spectating)) return;
+  if(!started || !spawned) return;
+  if(netOn){ if(netWinner>=0) return; } else if(paused || (over && !spectating)) return;
   tick++;
   stepEconomy(); stepAttacks(); stepBoats(); stepMissiles(); stepTrade(); stepNavy(); stepAir(); stepTax(); stepMaterials(); stepFallout(); stepDiplomacy();
   for(const p of players){ if(p.isBot && p.alive && (tick+p.thinkAt)%10===0) botThink(p); }
   Hooks.tick(tick);
-  if(!over && me.alive && me.tiles>=landTotal*0.6){ Hooks.end(true); }
+  if(netOn){ // multijugador: gana quien llegue al 60% del mundo, y la partida acaba para todos
+    for(const p of players) if(p.alive && p.tiles>=landTotal*0.6){ netWinner=p.id; Hooks.end(p===me); break; }
+  } else if(!over && me.alive && me.tiles>=landTotal*0.6){ Hooks.end(true); }
 }
 

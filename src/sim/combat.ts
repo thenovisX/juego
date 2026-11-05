@@ -62,8 +62,9 @@ function launchAttack(att,def,troops,cands){
   let a=attacks.find(a=>a.att===att && a.def===def);
   if(a){ a.troops+=troops; for(const c of cands) a.q.push(c); }
   else { a={att,def,troops,q:cands,warn:-1e9}; attacks.push(a); }
-  if(def>=0){ addOp(def,att,-6); if(def===me.id && att!==me.id){ me.rival=att;
-    if(tick-a.warn>=100){ a.warn=tick; Hooks.log(`{{alarm}} ¡${players[att].name} te ataca! Ataque en curso con ${fmt(a.troops)} tropas (le quedan ${fmt(players[att].troops)} en reserva).`,"bad"); Hooks.sfx("alarm"); } } }
+  if(def>=0){ addOp(def,att,-6); if(!players[def].isBot && def!==att){ players[def].rival=att;
+    if(def===me.id){
+    if(tick-a.warn>=100){ a.warn=tick; Hooks.log(`{{alarm}} ¡${players[att].name} te ataca! Ataque en curso con ${fmt(a.troops)} tropas (le quedan ${fmt(players[att].troops)} en reserva).`,"bad"); Hooks.sfx("alarm"); } } } }
   return true;
 }
 function stepAttacks(){
@@ -72,7 +73,7 @@ function stepAttacks(){
     let n=Math.min(a.q.length, Math.max(3, Math.floor(a.troops/(POP_X*20))), 220), stale=0;
     n=Math.max(1,Math.round(n*STANCE[A.stance||"bal"].att));
     while(n-- > 0 && a.q.length){
-      const k=(Math.random()*a.q.length)|0, t=a.q[k]; a.q[k]=a.q[a.q.length-1]; a.q.pop();
+      const k=(rnd()*a.q.length)|0, t=a.q[k]; a.q[k]=a.q[a.q.length-1]; a.q.pop();
       if(owner[t]!==a.def){ if(++stale<3000) n++; continue; }
       let adj=false; nbs(t,NB); for(const j of NB) if(j>=0 && owner[j]===a.att){ adj=true; break; }
       if(!adj) continue;
@@ -149,7 +150,7 @@ function impact(m){
     for(const d of [victim,...allies(victim)]){ for(const b of players[d].B.sam){ if(b.done>tick || b.cd>tick) continue;
       const dx=wdx(b.x,x), dy=b.y-y; if(dx*dx+dy*dy>(SAM_R*(1+0.2*((b.lvl||1)-1)))**2) continue;
       b.cd=tick+SAM_CD*(1-0.2*((b.lvl||1)-1));
-      if(m.type==="hydro" && Math.random()<0.5) continue;
+      if(m.type==="hydro" && rnd()<0.5) continue;
       blasts.push({x:x+0.5,y:y+0.5,r:3,t0:Hooks.now()});
       if(victim===me.id || m.owner===me.id) Hooks.log(`{{sam}} La antiaérea de ${players[d].name} ha derribado ${m.owner===me.id?"tu":"un"} ${W8.n.toLowerCase()}.`, victim===me.id?"good":"bad");
       Hooks.sfx("pop"); return; } }
