@@ -8,6 +8,7 @@ function tileCost(att,def,i){
   const t=TER[terrain[i]]; let c;
   if(def<0) c=t.cost*0.7*POP_X;
   else { const d=players[def], dens=d.troops/Math.max(1,d.tiles); c=t.cost*(1.5*POP_X+dens*0.9)*t.def*fortMult(def,i)*(wall[i]?4:1)*STANCE[d.stance||"bal"].def; }
+  if(def>=0 && (players[def].betrayUntil||0)>tick) c*=0.5; // un traidor tiene la mitad de defensa un rato
   c*=STANCE[players[att].stance||"bal"].cost;
   if(fallout[i]>tick) c*=2.5;
   return c;
@@ -56,8 +57,10 @@ function sendReinforcements(from,to,frac){
   if(give<1) return "Tu aliado ya tiene la población al máximo.";
   F.troops-=give; T.troops+=give; F.reinfAt=tick+REINF_CD; addOp(to,from,6); return give;
 }
+// Un reino recién fundado no puede ser atacado durante los primeros 45 s
+function immune(id){ return id>=0 && tick<players[id].st.born+IMMUNE_TIME; }
 function launchAttack(att,def,troops,cands){
-  if(!cands.length || troops<1 || peaceful(att,def)) return false;
+  if(!cands.length || troops<1 || peaceful(att,def) || immune(def)) return false;
   players[att].troops-=troops;
   let a=attacks.find(a=>a.att===att && a.def===def);
   if(a){ a.troops+=troops; for(const c of cands) a.q.push(c); }
@@ -66,13 +69,32 @@ function launchAttack(att,def,troops,cands){
     if(tick-a.warn>=100){ a.warn=tick; Hooks.log(`{{alarm}} ¡${players[att].name} te ataca! Ataque en curso con ${fmt(a.troops)} tropas (le quedan ${fmt(players[att].troops)} en reserva).`,"bad"); Hooks.sfx("alarm"); } } }
   return true;
 }
+// Anexión: un territorio enemigo que queda rodeado solo por casillas tuyas (sin mar ni otros reinos) pasa a ti sin bajas.
+const annexSeen = new Uint32Array(N); let annexStamp=0; const NBA=[0,0,0,0];
+function annexPockets(att,def,conq){
+  annexStamp++; let budget=4000;
+  for(const c of conq){ nbs(c,NBA); const seeds=[NBA[0],NBA[1],NBA[2],NBA[3]];
+    for(const s of seeds){
+      if(s<0||owner[s]!==def||annexSeen[s]===annexStamp||budget<=0) continue;
+      const reg=[s]; annexSeen[s]=annexStamp; let ok=true;
+      for(let h=0;h<reg.length&&ok;h++){ budget--; nbs(reg[h],NBA);
+        for(let q=0;q<4;q++){ const v=NBA[q]; if(v<0) continue;
+          if(!terrain[v]){ ok=false; break; }
+          if(owner[v]===def){ if(annexSeen[v]!==annexStamp){ annexSeen[v]=annexStamp; reg.push(v); if(reg.length>ANNEX_MAX){ ok=false; break; } } }
+          else if(owner[v]!==att){ ok=false; break; } } }
+      if(ok&&reg.length){ for(const t of reg) setOwner(t,att);
+        if(att===me.id||def===me.id) Hooks.log(`{{attack}} ${players[att].name} anexiona un territorio cercado de ${players[def].name} (${reg.length} casillas).`, att===me.id?"good":"bad"); }
+    }
+  }
+}
 function stepAttacks(){
   for(const a of attacks){
-    const A=players[a.att];
+    const A=players[a.att], conq=[];
     let n=Math.min(a.q.length, Math.max(3, Math.floor(a.troops/(POP_X*20))), 220), stale=0;
     n=Math.max(1,Math.round(n*STANCE[A.stance||"bal"].att));
     while(n-- > 0 && a.q.length){
       const k=(Math.random()*a.q.length)|0, t=a.q[k]; a.q[k]=a.q[a.q.length-1]; a.q.pop();
+      if(owner[t]===a.def && terrain[t]>0 && Math.random()>TER_SPEED[terrain[t]]){ a.q.push(t); continue; } // terreno difícil: se avanza más despacio
       if(owner[t]!==a.def){ if(++stale<3000) n++; continue; }
       let adj=false; nbs(t,NB); for(const j of NB) if(j>=0 && owner[j]===a.att){ adj=true; break; }
       if(!adj) continue;
@@ -81,9 +103,11 @@ function stepAttacks(){
       a.troops-=c;
       if(a.def>=0){ const D=players[a.def]; D.troops=Math.max(0,D.troops-(D.troops/Math.max(1,D.tiles))*0.8); if(a.def===me.id) Hooks.danger(); }
       setOwner(t,a.att);
+      if(a.def>=0) conq.push(t);
       if(!A.alive) break;
       nbs(t,NB2); for(const j of NB2) if(j>=0 && terrain[j] && owner[j]===a.def) a.q.push(j);
     }
+    if(conq.length && A.alive && players[a.def]?.alive) annexPockets(a.att,a.def,conq);
     if(!a.q.length){ A.troops+=a.troops; a.troops=0; }
   }
   attacks=attacks.filter(a=>a.troops>0 && a.q.length && players[a.att].alive);
@@ -149,7 +173,7 @@ function impact(m){
     for(const d of [victim,...allies(victim)]){ for(const b of players[d].B.sam){ if(b.done>tick || b.cd>tick) continue;
       const dx=wdx(b.x,x), dy=b.y-y; if(dx*dx+dy*dy>(SAM_R*(1+0.2*((b.lvl||1)-1)))**2) continue;
       b.cd=tick+SAM_CD*(1-0.2*((b.lvl||1)-1));
-      if(m.type==="hydro" && Math.random()<0.5) continue;
+      if(Math.random()>(m.type==="hydro"?SAM_HIT_H:SAM_HIT)) continue; // la antiaérea falla a veces (y queda en recarga)
       blasts.push({x:x+0.5,y:y+0.5,r:3,t0:Hooks.now()});
       if(victim===me.id || m.owner===me.id) Hooks.log(`{{sam}} La antiaérea de ${players[d].name} ha derribado ${m.owner===me.id?"tu":"un"} ${W8.n.toLowerCase()}.`, victim===me.id?"good":"bad");
       Hooks.sfx("pop"); return; } }

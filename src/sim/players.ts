@@ -47,9 +47,10 @@ function addOp(a,b,v){ if(a===b||a<0||b<0) return; opin[a*P+b]=Math.max(-100,Mat
 function relLabel(a,b){ const r=peek(a,b), out=[]; if(!r) return out;
   if(r.ally) out.push("{{ally}}"); else if(r.nap>tick) out.push("{{nap}}"); if(r.trade && !r.ally) out.push("{{trade}}"); return out; }
 function breakPacts(a,b){
-  const r=rel(a,b), had=r.ally||r.nap>tick||r.trade; r.ally=false; r.nap=0; r.trade=false;
+  const r=rel(a,b), had=r.ally||r.nap>tick||r.trade, wasPact=r.ally||r.nap>tick; r.ally=false; r.allyEnd=0; r.nap=0; r.trade=false;
   if(!had) return;
   players[a].traitorUntil=tick+1200;
+  if(wasPact){ players[a].betrayUntil=tick+BETRAY_TIME; players[a].betrayals=(players[a].betrayals||0)+1; }
   for(let k=0;k<P;k++) addOp(k,a,-20);
   addOp(b,a,-100);
   Hooks.log(`{{break}} ${players[a].name} ha roto sus pactos con ${players[b].name}.`, a===me.id||b===me.id?"bad":"");
@@ -66,7 +67,7 @@ function signPact(a,b,type){
   const r=rel(a,b);
   if(type==="nap") r.nap=tick+NAP_TIME;
   if(type==="trade") r.trade=true;
-  if(type==="ally"){ r.ally=true; r.trade=true; }
+  if(type==="ally"){ r.ally=true; r.trade=true; r.allyEnd=tick+ALLY_TIME; }
   if(type!=="trade") for(const x of attacks){ if((x.att===a&&x.def===b)||(x.att===b&&x.def===a)) refundAttack(x); }
   attacks=attacks.filter(x=>x.troops>0);
 }

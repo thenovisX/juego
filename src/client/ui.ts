@@ -88,6 +88,7 @@ function attackAt(i){
   const def=owner[i], troops=Math.floor(me.troops*ratio);
   if(troops<1){ log("No tienes tropas suficientes.","bad"); return; }
   const cands=borderCandidates(me.id,def);
+  if(immune(def)){ log(`${players[def].name} acaba de fundarse y es inmune a ataques unos segundos.`,"bad"); sfx("err"); return; }
   if(cands.length){ launchAttack(me.id,def,troops,cands); sfx("march"); if(def>=0) log(`{{attack}} Atacas a ${players[def].name} con ${fmt(troops)} tropas.`); stepAttacks(); return; }
   const why=sendBoat(me,i,troops);
   if(why){ log(def<0?`No tienes frontera con esa tierra. ${why}`:`No tienes frontera con ${players[def].name}. ${why}`,"bad"); sfx("err"); }
@@ -224,7 +225,7 @@ function renderDip(){
   else if(r.nap>tick) chips.push(`<span class="chip g">{{nap}} No agresión · ${Math.ceil((r.nap-tick)/10)} s</span>`);
   if(r.trade) chips.push(`<span class="chip g">{{trade}} Comercio</span>`);
   if(attacks.some(a=>a.att===dipFor&&a.def===me.id)) chips.push(`<span class="chip r">{{attack}} Te está atacando</span>`);
-  if(p.traitorUntil>tick) chips.push(`<span class="chip r">{{traitor}} Traidor</span>`);
+  if(p.traitorUntil>tick) chips.push(`<span class="chip r">{{traitor}} Traidor${p.betrayals>1?" x"+p.betrayals:""}</span>`);
   const pct=Math.round(ratio*100), siloOk=me.B.silo.some(b=>b.done<=tick), mil=[], trd=[];
   mil.push(`<button class="btn" type="button" data-a="attack">{{attack}} Atacar <small>${pct}% · ${fmt(me.troops*ratio)}</small></button>`);
   mil.push(`<button class="btn" type="button" data-a="boat" ${me.B.port.some(b=>b.done<=tick)?"":"disabled"}>{{boat}} Enviar barco <small>${pct}% · desembarco</small></button>`);
@@ -237,7 +238,7 @@ function renderDip(){
   const acts=[];
   if(!r.ally && r.nap<=tick) acts.push(`<button class="btn" type="button" data-a="nap">{{nap}} Pacto de no agresión <small>5 min</small></button>`);
   if(!r.trade) acts.push(`<button class="btn" type="button" data-a="trade">{{trade}} Acuerdo comercial <small>+12% oro</small></button>`);
-  if(!r.ally) acts.push(`<button class="btn" type="button" data-a="ally">{{ally}} Proponer alianza <small>permanente</small></button>`);
+  if(!r.ally||r.allyEnd-tick<600) acts.push(`<button class="btn" type="button" data-a="ally">{{ally}} ${r.ally?"Renovar alianza":"Proponer alianza"} <small>10 min</small></button>`);
   acts.push(`<button class="btn" type="button" data-a="gift" ${me.gold<300*GOLD_X?"disabled":""}>{{gift}} Regalar ${fmt(300*GOLD_X)} de oro <small>mejora la relación</small></button>`);
   if(r.ally) acts.push(`<button class="btn" type="button" data-a="reinf" title="Cedes un 20% de tu reserva a tu aliado">{{reinforce}} Enviar refuerzos <small>20% · ${fmt(me.troops*0.2)}</small></button>`);
   if(r.ally) acts.push(`<button class="btn" type="button" data-a="help">🆘 Pedir ayuda <small>ataca a tu enemigo</small></button>`);
