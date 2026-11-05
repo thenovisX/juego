@@ -4,7 +4,7 @@ function makeName(used){ for(let k=0;k<400;k++){ const n=NAMES[(Math.random()*NA
 function hsl(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return [f(0)*255|0,f(8)*255|0,f(4)*255|0]; }
 function newPlayer(name,c,isBot){
   const id=players.length;
-  const p={id,name,c,isBot,alive:true,troops:700,tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
+  const p={id,name,c,isBot,alive:true,troops:700*POP_X,stance:"bal",tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
     cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]])),
     aggro:0.15+Math.random()*0.25, thinkAt:(Math.random()*20)|0, rival:-1, focus:-1, traitorUntil:0, lastHit:-1e9,
     st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};
@@ -82,6 +82,18 @@ function sendGift(from,to,amount){ const F=players[from]; if(F.gold<amount) retu
 
 // ================= Edificios =================
 function bCost(p,t){ return Math.round(BT[t].base*Math.pow(BT[t].mul,p.cnt[t])); }
+function nearAny(L,x,y,r){ for(const c of L){ const dx=wdx(c.x,x), dy=c.y-y; if(dx*dx+dy*dy<=r*r) return true; } return false; }
+function countNear(L,b,r){ let n=0; for(const c of L){ if(c.done>tick) continue; const dx=wdx(c.x,b.x), dy=c.y-b.y; if(dx*dx+dy*dy<=r*r) n++; } return n; }
+// Calcula cada segundo el oro/s de mercados, casas de la moneda y casas de comercio (se guarda en b.eff)
+function refreshEff(){
+  for(const p of players){ if(!p.alive) continue; let tr=-1;
+    for(const b of p.B.market) b.eff = b.done>tick ? 0 : Math.min(MKT_MAX,countNear(p.B.city,b,MKT_R))*2.5*GOLD_X*(b.lvl||1);
+    if(p.B.mint.length){ const src=p.B.mine.concat(p.B.foundry);
+      for(const b of p.B.mint) b.eff = b.done>tick ? 0 : (2*GOLD_X + Math.min(MINT_MAX,countNear(src,b,MINT_R))*1.5*GOLD_X)*(b.lvl||1); }
+    if(p.B.tradehouse.length){ tr=Math.min(TRADE_MAX,partners(p));
+      for(const b of p.B.tradehouse) b.eff = b.done>tick ? 0 : tr*3*GOLD_X*(b.lvl||1); }
+  }
+}
 function coastal(i){ nbs(i,NB); for(const j of NB) if(j>=0 && !terrain[j]) return true; return false; }
 function canBuild(p,t,i){
   if(owner[i]!==p.id) return "Solo puedes construir en tu territorio.";
@@ -91,6 +103,9 @@ function canBuild(p,t,i){
   if(t==="port" && !coastal(i)) return "El puerto tiene que estar junto al mar.";
   if(t==="sawmill" && terrain[i]!==2) return "El aserradero va en un bosque.";
   if(t==="farm" && terrain[i]!==1) return "La granja va en una llanura.";
+  if(BT[t].max && p.cnt[t]>=BT[t].max) return `Solo puedes tener ${BT[t].max} de este edificio (mejóralos en vez de construir más).`;
+  if(t==="market" && !nearAny(p.B.city,x,y,MKT_R)) return "El mercado necesita una ciudad a menos de 20 casillas.";
+  if(t==="mint" && !nearAny(p.B.mine.concat(p.B.foundry),x,y,MINT_R)) return "La casa de la moneda necesita una mina o metalúrgica a menos de 20 casillas.";
   if(p.gold<bCost(p,t)) return `Te faltan ${fmt(bCost(p,t)-p.gold)} de oro.`;
   return null;
 }
@@ -112,17 +127,18 @@ function destroyBuilding(b){ if(b.dead) return; unlink(b); bldAt[b.i]=-1; b.dead
 
 // ================= Economía =================
 function stats(p){
-  let cities=0, mines=0, econ=0;
+  let cities=0, mines=0, econ=0, extra=0, barr=0;
   for(const b of buildings){ if(b.owner!==p.id || b.done>tick) continue;
-    if(b.t==="city") cities+=b.lvl||1; else if(b.t==="mine") mines += (terrain[b.i]===3?2:1)*(b.lvl||1); else if(b.t==="sawmill"||b.t==="farm"||b.t==="foundry") econ+=b.lvl||1; }
-  const max = 1000 + p.tiles*3 + cities*2000;
+    if(b.t==="city") cities+=b.lvl||1; else if(b.t==="mine") mines += (terrain[b.i]===3?2:1)*(b.lvl||1); else if(b.t==="sawmill"||b.t==="farm"||b.t==="foundry") econ+=b.lvl||1; else if(b.t==="barracks") barr+=b.lvl||1;
+    if(b.eff) extra+=b.eff; }
+  const max = (1000 + p.tiles*3 + cities*2000 + barr*1000) * POP_X;
   const net = stationNet(p);
-  const grow = (20 + p.tiles*0.05 + (cities+net.cities*0.5)*15) * Math.max(0,1-p.troops/max) * (p.isBot?diff:1) * unrest(p);
+  const grow = (20 + p.tiles*0.05 + (cities+net.cities*0.5)*15 + barr*8) * POP_X * 0.6 * Math.max(0,1-p.troops/max) * (p.isBot?diff:1) * unrest(p);
   const tr = Math.min(5,partners(p));
   const jobs = 1 + 0.25*(mines+net.mines*0.5); // las minas dan empleo: más población que paga impuestos
   const taxInc = p.tiles*p.tax*0.01*jobs;
-  const inc = ((1 + p.tiles*0.004 + econ*4) * (1+0.12*tr) * GOLD_X + taxInc) * unrest(p);
-  return {max,grow,inc,cities,mines,tr,net,taxInc};
+  const inc = ((1 + p.tiles*0.004 + econ*4) * (1+0.12*tr) * GOLD_X + taxInc + extra) * unrest(p);
+  return {max,grow,inc,cities,mines,tr,net,taxInc,extra,barr};
 }
 // Red de estaciones: las estaciones a menos de ST_LINK se unen; una red que cubre (ST_COV) al menos dos tipos de
 // mina/ciudad/puerto da +50% a los edificios cubiertos. Se recalcula cada segundo.

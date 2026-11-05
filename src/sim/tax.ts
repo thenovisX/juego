@@ -4,8 +4,9 @@
 // que dejan casillas sin dueño. Las revueltas desahogan algo el ambiente, pero el problema vuelve si no bajas la tasa.
 const TAX_MAX=80;
 function unrest(p:any){ return p.happy>=50?1:0.5+p.happy/100; }
+function templeHappy(p:any){ let n=0; for(const b of p.B.temple) if(b.done<=tick) n+=4*(b.lvl||1); return Math.min(15,n); }
 function happyTarget(p:any){
-  return Math.max(0,Math.min(100, 92 - p.tax*1.05 + Math.min(10,p.cnt.city*1.5) + Math.min(8,p.cnt.mine*1.2) - (p.lastHit>tick-300?8:0)));
+  return Math.max(0,Math.min(100, 92 - p.tax*1.05 + Math.min(10,p.cnt.city*1.5) + Math.min(8,p.cnt.mine*1.2) + templeHappy(p) - (p.lastHit>tick-300?8:0)));
 }
 function taxWarnings(p:any){
   if(p.happy>55) p.taxWarn=0;

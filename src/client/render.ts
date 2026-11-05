@@ -57,6 +57,7 @@ function draw(now){
   if(mode && lastMouse){
     if(mode.k==="weap"){ ctx.strokeStyle="rgba(255,110,80,.9)"; ctx.fillStyle="rgba(255,110,80,.12)"; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(lastMouse[0],lastMouse[1],WEAP[mode.t].r*z,0,Math.PI*2); ctx.fill(); ctx.stroke(); }
     else if(mode.k==="build" && mode.t==="sam"){ ctx.lineWidth=2; ctx.setLineDash([6,6]); ctx.strokeStyle="rgba(124,192,255,.95)"; ctx.fillStyle="rgba(124,192,255,.10)"; ctx.beginPath(); ctx.arc(lastMouse[0],lastMouse[1],SAM_R*z,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); }
+    else if(mode.k==="build" && BT[mode.t].r && mode.t!=="station"){ ctx.lineWidth=1.5; ctx.setLineDash([5,5]); ctx.strokeStyle="rgba(245,211,140,.9)"; ctx.fillStyle="rgba(245,211,140,.08)"; ctx.beginPath(); ctx.arc(lastMouse[0],lastMouse[1],BT[mode.t].r*z,0,Math.PI*2); ctx.fill(); ctx.stroke(); ctx.setLineDash([]); }
     else if(mode.k==="build" && mode.t==="station"){ ctx.lineWidth=1.5; ctx.setLineDash([5,5]); ctx.strokeStyle="rgba(124,192,255,.9)"; ctx.beginPath(); ctx.arc(lastMouse[0],lastMouse[1],ST_COV*z,0,Math.PI*2); ctx.stroke(); ctx.strokeStyle="rgba(245,211,140,.6)"; ctx.beginPath(); ctx.arc(lastMouse[0],lastMouse[1],ST_LINK*z,0,Math.PI*2); ctx.stroke(); ctx.setLineDash([]); }
   }
   // estelas de los barcos hasta llegar a destino

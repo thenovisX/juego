@@ -28,12 +28,18 @@ function botThink(p){
   else if(p.gold>bCost(p,"mine") && p.cnt.mine < p.tiles/3000) tryPlace("mine");
   else if(p.gold>bCost(p,"sawmill") && p.cnt.sawmill<p.tiles/5000) tryPlace("sawmill");
   else if(p.gold>bCost(p,"farm") && p.cnt.farm<p.tiles/5000) tryPlace("farm");
+  else if(p.gold>bCost(p,"market") && p.cnt.market<p.cnt.city*0.7 && p.cnt.city>0 && Math.random()<0.5){ const c=p.B.city[(Math.random()*p.B.city.length)|0]; if(c) placeNear(p,"market",c,14); }
+  else if(p.gold>bCost(p,"mint") && p.cnt.mint<Math.min(2,p.cnt.mine/3) && p.cnt.mine+p.cnt.foundry>0){ const m=p.B.mine.concat(p.B.foundry); placeNear(p,"mint",m[(Math.random()*m.length)|0],14); }
+  else if(p.gold>bCost(p,"tradehouse") && p.cnt.tradehouse<1 && partners(p)>=2) tryPlace("tradehouse");
+  else if(p.gold>bCost(p,"temple") && p.cnt.temple<Math.min(3,p.tiles/6000) && p.happy<75) tryPlace("temple");
+  else if(p.gold>bCost(p,"barracks") && p.cnt.barracks<Math.min(3,p.tiles/8000) && p.troops>st.max*0.8) tryPlace("barracks");
   else if(p.gold>bCost(p,"port") && p.cnt.port===0 && s.coast.length && (s.neutral===0 || Math.random()<0.15)) tryPlace("port",s.coast);
   else if(p.gold>bCost(p,"silo") && p.tiles>18000 && p.cnt.silo===0 && tick>1800) tryPlace("silo");
   else if(p.gold>bCost(p,"fort") && s.front.length && p.cnt.fort < p.tiles/6000) tryPlace("fort",s.front);
   // impuestos: sube mientras el pueblo esté contento (máx. 20 %), baja si empieza a inquietarse
   if(p.happy<55) p.tax=Math.max(0,p.tax-5); else if(p.happy>78 && p.tax<20 && Math.random()<0.2) p.tax+=5;
   const underAttack=attacks.some(a=>a.def===p.id && a.att!==p.id);
+  p.stance = underAttack ? "def" : p.troops>st.max*0.7 ? "agg" : "bal";
   // red de estaciones: conecta minas, ciudades y puertos para producir y exportar más
   if(p.gold>bCost(p,"station")*1.5 && p.cnt.station<Math.min(4,1+(p.cnt.mine+p.cnt.city)/3) && p.cnt.mine+p.cnt.city+p.cnt.port>=2 && Math.random()<0.25){
     const anchors=buildings.filter(b=>!b.dead&&b.owner===p.id&&(b.t==="mine"||b.t==="city"||b.t==="port"));

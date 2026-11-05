@@ -1,5 +1,6 @@
 // ================= Bucle =================
 function stepEconomy(){
+  if(tick%10===0) refreshEff();
   for(const p of players){ if(!p.alive) continue; const st=stats(p);
     p.troops=Math.min(st.max*1.05, p.troops+st.grow/10); p.gold+=st.inc/10*(p.isBot?diff:1); }
 }
