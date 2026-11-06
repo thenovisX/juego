@@ -4,4 +4,5 @@ cd /d "%~dp0"
 set "PATH=%~dp0tools\node-v24.22.2-win-x64;%PATH%"
 node tools\build.mjs --check
 node tools\test-sim.mjs
+node tools\test-mapas.mjs
 pause

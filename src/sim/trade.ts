@@ -17,7 +17,7 @@ function axisClear(x0:number,y0:number,x1:number,y1:number): boolean{
 // Cada tramo en L une dos casillas del camino y mide lo mismo que él (sigue siendo el más corto), solo con menos giros.
 function straighten(tiles:number[]): number[][]{
   const n=tiles.length, X=new Array(n), Y=new Array(n); X[0]=tiles[0]%W; Y[0]=(tiles[0]/W)|0;
-  for(let k=1;k<n;k++){ let d=tiles[k]%W-tiles[k-1]%W; if(d>W/2) d-=W; if(d<-W/2) d+=W; X[k]=X[k-1]+d; Y[k]=(tiles[k]/W)|0; }
+  for(let k=1;k<n;k++){ let d=wrapDx(tiles[k]%W-tiles[k-1]%W); X[k]=X[k-1]+d; Y[k]=(tiles[k]/W)|0; }
   const pt=(x:number,y:number)=>[((x%W)+W)%W+0.5,y+0.5], out=[pt(X[0],Y[0])]; let a=0;
   while(a<n-1){ let done=false;
     for(let j=Math.min(n-1,a+200);j>a&&!done;j--){ const dx=X[j]-X[a], dy=Y[j]-Y[a]; if(Math.abs(dx)+Math.abs(dy)!==j-a) continue;
@@ -32,25 +32,28 @@ function straighten(tiles:number[]): number[][]{
 // Avanza un barco por su ruta (lista de puntos); o[idx] es el índice del siguiente punto.
 function moveAlong(o:any,path:number[][],idx:string,speed:number){
   let rem=speed;
-  while(rem>0 && o[idx]<path.length){ const [tx,ty]=path[o[idx]]; let dx=tx-o.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W; const dy=ty-o.y, d=Math.hypot(dx,dy);
+  while(rem>0 && o[idx]<path.length){ const [tx,ty]=path[o[idx]]; let dx=wrapDx(tx-o.x); const dy=ty-o.y, d=Math.hypot(dx,dy);
     if(d<=rem){ o.x=tx; o.y=ty; rem-=d; o[idx]++; } else { o.x=((o.x+dx/d*rem)%W+W)%W; o.y+=dy/d*rem; rem=0; } }
 }
 // Ruta marítima entre dos puertos como lista de puntos [x,y]; null si no hay mar conectado.
 // Búferes reutilizados entre búsquedas: "seaSeen" guarda una marca de búsqueda para no limpiar arrays enteros.
-const seaPar=new Int32Array(N), seaQ=new Int32Array(N), seaSeen=new Uint32Array(N); let seaGen=0;
+let seaPar: Int32Array, seaQ: Int32Array, seaSeen: Uint32Array; let seaGen=0;
 // Mapa acuático de los barcos (los soldados usan el terrestre): mar abierto = agua sin ninguna tierra en las 8 casillas vecinas.
 // Los barcos prefieren el mar abierto y solo se acercan a la costa junto a sus puertos/destinos o por un estrecho.
 let deepMask: Uint8Array|null=null;
+// Los búferes del mar se crean al primer uso (en mapas grandes ocupan decenas de MB) y se descartan al cambiar de mapa.
+function resetSeaBuffers(){ seaPar=seaQ=null as any; seaSeen=null as any; seaGen=0; deepMask=null; seaCache.clear(); }
+function seaBuffers(){ if(!seaPar){ seaPar=new Int32Array(N); seaQ=new Int32Array(N); seaSeen=new Uint32Array(N); } }
 function deepSea(): Uint8Array{
   if(deepMask) return deepMask; const d=new Uint8Array(N);
-  for(let y=1;y<H-1;y++) for(let x=0;x<W;x++){ const i=y*W+x; if(terrain[i]) continue; const l=x===0?i+W-1:i-1, r=x===W-1?i-W+1:i+1;
+  for(let y=1;y<H-1;y++) for(let x=0;x<W;x++){ const i=y*W+x; if(terrain[i]) continue; const l=x===0?(WRAP?i+W-1:i):i-1, r=x===W-1?(WRAP?i-W+1:i):i+1;
     if(!terrain[l]&&!terrain[r]&&!terrain[i-W]&&!terrain[i+W]&&!terrain[l-W]&&!terrain[l+W]&&!terrain[r-W]&&!terrain[r+W]) d[i]=1; }
   return deepMask=d;
 }
 // BFS por el mar (camino más corto en casillas) desde cualquiera de "starts" hasta cualquiera de "goals". Primero solo por mar abierto
 // (más allá de 3 casillas de los extremos); si no hay camino, por cualquier agua. Devuelve la lista de casillas o null.
 function seaTiles(starts:number[],goals:number[]): number[]|null{
-  if(!starts.length||!goals.length) return null;
+  if(!starts.length||!goals.length) return null; seaBuffers();
   const gs=new Set(goals), deep=deepSea(), anchors=starts.slice(0,4).concat(goals.slice(0,4)), nb=[0,0,0,0];
   const near=(j:number)=>{ const x=j%W, y=(j/W)|0; for(const a of anchors){ if(wdx(x,a%W)<=3 && Math.abs(y-((a/W)|0))<=3) return true; } return false; };
   for(const useDeep of [true,false]){
