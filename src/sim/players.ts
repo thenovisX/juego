@@ -1,12 +1,12 @@
 // ================= Jugadores =================
 const NAMES=["España","Francia","Alemania","Italia","Portugal","Reino Unido","Irlanda","Polonia","Ucrania","Rumanía","Grecia","Turquía","Suecia","Noruega","Finlandia","Rusia","Kazajistán","Mongolia","China","Japón","Corea","India","Pakistán","Irán","Irak","Arabia Saudí","Egipto","Libia","Argelia","Marruecos","Nigeria","Etiopía","Kenia","Sudán","Congo","Angola","Sudáfrica","Madagascar","Australia","Nueva Zelanda","Indonesia","Filipinas","Vietnam","Tailandia","Birmania","Afganistán","Canadá","Estados Unidos","México","Cuba","Colombia","Venezuela","Perú","Bolivia","Chile","Argentina","Brasil","Paraguay","Uruguay","Ecuador","Groenlandia","Islandia","Escandinavia","Siberia","Patagonia","Anatolia","Cáucaso","Balcanes","Tíbet","Manchuria","Indochina","Sahara","Amazonia","Alaska","Texas","Baviera","Cataluña","Escocia","Sicilia","Cerdeña","Creta","Hawái","Borneo","Sumatra","Java","Yemen","Omán","Siria","Jordania","Túnez","Ghana","Mali","Níger","Chad","Tanzania","Zambia","Namibia","Mozambique","Uganda","Camerún","Somalia","Nepal","Bangladés","Camboya","Laos","Bielorrusia","Hungría","Austria","Suiza","Bélgica","Países Bajos","Dinamarca","Serbia","Bulgaria","Croacia"];
-function makeName(used){ for(let k=0;k<400;k++){ const n=NAMES[(Math.random()*NAMES.length)|0]; if(!used.has(n)){used.add(n);return n;} } let n,c=2; do{ n="Nueva "+NAMES[(Math.random()*NAMES.length)|0]+" "+c++; }while(used.has(n)); used.add(n); return n; }
+function makeName(used){ for(let k=0;k<400;k++){ const n=NAMES[(rnd()*NAMES.length)|0]; if(!used.has(n)){used.add(n);return n;} } let n,c=2; do{ n="Nueva "+NAMES[(rnd()*NAMES.length)|0]+" "+c++; }while(used.has(n)); used.add(n); return n; }
 function hsl(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return [f(0)*255|0,f(8)*255|0,f(4)*255|0]; }
 function newPlayer(name,c,isBot){
   const id=players.length;
   const p={id,name,c,isBot,alive:true,troops:700*POP_X,stance:"bal",tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
     cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]])),
-    aggro:0.15+Math.random()*0.25, thinkAt:(Math.random()*20)|0, rival:-1, focus:-1, traitorUntil:0, lastHit:-1e9,
+    aggro:0.15+rnd()*0.25, thinkAt:(rnd()*20)|0, rival:-1, focus:-1, traitorUntil:0, lastHit:-1e9,
     res:{done:{},cur:null,prog:0}, st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};
   players.push(p); tilesOf.push([]); return p;
 }
@@ -58,9 +58,9 @@ function breakPacts(a,b){
 function botAnswer(bot,from,type){
   const b=players[bot], f=players[from], o=op(bot,from), s=f.troops/Math.max(1,b.troops), r=rel(bot,from);
   const tr=f.traitorUntil>tick ? 40 : 0;
-  if(type==="nap") return o-tr > -35 && (s>0.7 || Math.random()<0.45+o/200);
-  if(type==="trade") return o-tr > -15 && Math.random() < 0.55+o/150;
-  if(type==="ally") return (r.trade || r.nap>tick) && o-tr > 20 && s>0.45 && Math.random()<0.7;
+  if(type==="nap") return o-tr > -35 && (s>0.7 || rnd()<0.45+o/200);
+  if(type==="trade") return o-tr > -15 && rnd() < 0.55+o/150;
+  if(type==="ally") return (r.trade || r.nap>tick) && o-tr > 20 && s>0.45 && rnd()<0.7;
   return false;
 }
 function signPact(a,b,type){

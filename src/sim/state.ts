@@ -6,6 +6,7 @@ const wall = new Uint8Array(N);
 const fallout = new Uint32Array(N);
 let players=[], tilesOf=[], buildings=[], attacks=[], boats=[], missiles=[], blasts=[], falloutQ=[];
 let landTotal=0, tick=0, me=null, started=false, paused=false, over=false, spawned=false, spectating=false, diff=1, speed=1;
+let netOn=false, netWinner=-1; // multijugador (ver net.ts)
 let P=0, opin=null; const rels=new Map();
 
 const GOLD_X = 100; // todos los precios y todo el oro ganado van multiplicados por esto

@@ -15,15 +15,16 @@ function taxWarnings(p:any){
 }
 function revolt(p:any){
   const L=tilesOf[p.id]; if(!L.length) return;
-  const c=L[(Math.random()*L.length)|0], r=1+Math.floor((25-p.happy)/6); let n=0;
+  const c=L[(rnd()*L.length)|0], r=1+Math.floor((25-p.happy)/6); let n=0;
   disk(c%W,(c/W)|0,r,(i:number)=>{ if(terrain[i] && owner[i]===p.id){ setOwner(i,-1); n++; } });
   if(p===me){ Hooks.log(`{{riot}} ¡Revuelta! ${n} casillas se han rebelado y quedan sin dueño.`,"bad"); Hooks.shake(8); Hooks.danger(); }
   p.happy=Math.min(100,p.happy+10);
 }
+function setTax(p:any,v:number){ p.tax=v; }
 function stepTax(){
   for(const p of players){ if(!p.alive) continue;
     p.happy+=(happyTarget(p)-p.happy)*0.004;
     if(p===me) taxWarnings(p);
-    if(tick%30===0 && p.happy<25 && Math.random()<(25-p.happy)/40) revolt(p);
+    if(tick%30===0 && p.happy<25 && rnd()<(25-p.happy)/40) revolt(p);
   }
 }
