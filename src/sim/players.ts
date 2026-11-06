@@ -114,7 +114,7 @@ function canBuild(p,t,i){
 function placeBuilding(p,t,i,instant){
   const b:any={t,i,owner:p.id,x:i%W,y:(i/W)|0,done:instant?0:tick+BUILD_TIME,cd:0,dead:false,lvl:1};
   if(!instant){ p.gold-=bCost(p,t); p.st.built++; }
-  if(!instant && !p.isBot && MAT_COST[t]){ b.need={...MAT_COST[t]}; b.done=Infinity; }
+  { const mc=(!instant && !p.isBot)?matCost(p,t):null; if(mc){ b.need=mc; b.done=Infinity; } }
   if(t==="bank") b.store={piedra:0,madera:0,hierro:0,comida:0};
   bldAt[i]=buildings.length; buildings.push(b); p.cnt[t]++; if(p.B[t]) p.B[t].push(b);
 }
@@ -128,19 +128,28 @@ function transferBuilding(b,np,opn){
 function destroyBuilding(b){ if(b.dead) return; unlink(b); bldAt[b.i]=-1; b.dead=true; b.owner=-1; }
 
 // ================= Economía =================
+// Rendimientos decrecientes: el 1.º edificio de un tipo rinde al 100 %, el 2.º al ~74 %, el 3.º al ~59 %, el 4.º al ~49 %...
+// (por eso hace falta más producción de materiales, no solo más edificios, para seguir creciendo).
+function dim(list:any[],w?:(b:any)=>number): number{
+  let s=0, k=0; for(const b of list){ if(b.done>tick) continue; s+=(w?w(b):(b.lvl||1))/(1+DIM_K*k); k++; } return s;
+}
 function stats(p){
-  let cities=0, mines=0, econ=0, extra=0, barr=0;
+  let cities=0, barr=0, extra=0;
   for(const b of buildings){ if(b.owner!==p.id || b.done>tick) continue;
-    if(b.t==="city") cities+=b.lvl||1; else if(b.t==="mine") mines += (terrain[b.i]===3?2:1)*(b.lvl||1); else if(b.t==="sawmill"||b.t==="farm"||b.t==="foundry") econ+=b.lvl||1; else if(b.t==="barracks") barr+=b.lvl||1;
+    if(b.t==="city") cities+=b.lvl||1; else if(b.t==="barracks") barr+=b.lvl||1;
     if(b.eff) extra+=b.eff; }
+  const mines = dim(p.B.mine,(b:any)=>(terrain[b.i]===3?2:1)*(b.lvl||1));
+  const econ = dim(p.B.sawmill)+dim(p.B.farm)+dim(p.B.foundry);
   const max = (1000 + p.tiles*3 + cities*2000 + barr*1000) * POP_X;
   const net = stationNet(p);
-  const grow = (20 + p.tiles*0.05 + (cities+net.cities*0.5)*15 + barr*8) * POP_X * 0.6 * Math.max(0,1-p.troops/max) * (p.isBot?diff:1) * unrest(p);
+  const hunger = p.hunger ? HUNGER_GROW : 1;
+  const grow = (20 + p.tiles*0.05 + (cities+net.cities*0.5)*15 + barr*8) * POP_X * 0.6 * Math.max(0,1-p.troops/max) * (p.isBot?diff:1) * unrest(p) * hunger;
   const tr = Math.min(5,partners(p));
-  const jobs = 1 + 0.25*(mines+net.mines*0.5); // las minas dan empleo: más población que paga impuestos
+  const jobs = 1 + 0.2*(mines+net.mines*0.4); // las minas dan empleo: más población que paga impuestos
   const taxInc = p.tiles*p.tax*0.01*jobs;
-  const inc = ((1 + p.tiles*0.004 + econ*4) * (1+0.12*tr) * GOLD_X + taxInc + extra) * unrest(p);
-  return {max,grow,inc,cities,mines,tr,net,taxInc,extra,barr};
+  const inc = ((0.5 + p.tiles*0.0025 + econ*ECON_GOLD) * (1+0.1*tr) * GOLD_X + taxInc + extra) * unrest(p);
+  const food = {use:foodUse(p), make:foodMake(p)};
+  return {max,grow,inc,cities,mines,tr,net,taxInc,extra,barr,food};
 }
 // Red de estaciones: las estaciones a menos de ST_LINK se unen; una red que cubre (ST_COV) al menos dos tipos de
 // mina/ciudad/puerto da +50% a los edificios cubiertos. Se recalcula cada segundo.
