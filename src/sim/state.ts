@@ -14,7 +14,7 @@ const CATS: any = {
   pop:{n:"Pueblo y ejército", short:"Pueblo", e:"{{troops}}", tip:"Población máxima, felicidad (para subir impuestos) y reclutamiento de tropas."},
   def:{n:"Defensa",        e:"{{shield}}",  tip:"Hacen más difícil conquistarte o derriban los misiles enemigos."},
   log:{n:"Logística",      e:"{{station}}", tip:"Conectan tu reino: materiales por vías, comercio por mar y por aire."},
-  arm:{n:"Armamento", short:"Armas",      e:"{{missile}}", tip:"Silo para misiles y bombas, y flotas o aviones de guerra para cazar el comercio enemigo."},
+  arm:{n:"Armamento", short:"Armas",      e:"{{missile}}", tip:"Arsenal para fabricar tanques y artillería, silo para misiles y bombas, y flotas o aviones de guerra para cazar el comercio enemigo."},
   sci:{n:"Ciencia",        e:"{{science}}", tip:"Las universidades generan puntos de investigación. Cuantas más universidades, antes desbloqueas edificios y armas avanzadas."},
   nat:{n:"Nación", short:"Nación", e:"{{crown}}", tip:"Tradiciones: gasta Autoridad (la dan tus ciudades y universidades) en bonos permanentes. Atacar a un reino sin casus belli te da infamia."},
   tro:{n:"Órdenes",        e:"{{attack}}",  tip:"Reclutar, retirar o reforzar las tropas que están en combate."},
@@ -38,6 +38,7 @@ const BT = {
   bank:{cat:"log", n:"Banco de materiales", e:"{{bank}}", key:"m", base:50000, mul:1.4, desc:"Guarda hasta 500 de cada material y lo reparte por la red de estaciones.", where:"Dentro del radio de una estación."},
   port:{cat:"log", n:"Puerto", e:"{{port}}", key:"4", base:35000, mul:1.5, desc:"Envía flotas de desembarco y cargueros de comercio a otras costas.", where:"Solo junto al mar."},
   airport:{cat:"log", n:"Aeropuerto", e:"{{airport}}", key:"a", base:400000, mul:1.5, desc:"Despacha aviones comerciales que pagan oro a tus socios; con aviones de guerra derribas los ajenos.", where:"Cualquier terreno propio."},
+  arsenal:{cat:"arm", n:"Arsenal", e:"{{arsenal}}", key:"o", base:70000, mul:1.6, max:3, desc:"Fabrica tanques y artillería (se compran en esta pestaña con oro y materiales). Cada nivel permite guardar 4 piezas más de cada tipo.", where:"Cualquier terreno propio. Máx. 3."},
   silo:{cat:"arm", n:"Silo", e:"{{silo}}", key:"6", base:80000, mul:1.6, desc:"Desbloquea misil, atómica y bomba H.", where:"Cualquier terreno propio."},
 };
 const WEAP = {
@@ -48,6 +49,8 @@ const WEAP = {
 // Investigación: lo que está aquí no se puede construir/lanzar hasta investigarlo (puntos de investigación = cost).
 // Cada universidad terminada aporta 1 punto/s por nivel, así que con N universidades tardas N veces menos.
 const RESEARCH: any = {
+  arsenal:   {n:"Industria militar",  e:"{{arsenal}}",    cost:250,  desc:"Permite construir Arsenales y fabricar tanques."},
+  artillery: {n:"Artillería",          e:"{{cannon}}",     cost:450,  req:"arsenal", desc:"Permite fabricar artillería en los Arsenales."},
   mint:      {n:"Acuñación",           e:"{{mint}}",       cost:100,  desc:"Permite construir Casas de la moneda."},
   tradehouse:{n:"Comercio exterior",   e:"{{tradehouse}}", cost:100,  desc:"Permite construir Casas de comercio."},
   sam:       {n:"Defensa antiaérea",   e:"{{sam}}",        cost:200,  desc:"Permite construir Antiaéreas."},
@@ -65,6 +68,7 @@ const STANCE = {
   def:{n:"Defensiva",   e:"{{stance_def}}", key:"l", att:0.6, cost:1,   def:1.4, desc:"Tus ataques avanzan un 40% más despacio, pero eres un 40% más difícil de conquistar."},
 };
 const RECRUIT_TROOPS=20000, RECRUIT_COST=30000, RECRUIT_CD=250, REINF_CD=600;
+const OCC_X=2.2, OCC_SPEED=0.75; // conquistar el territorio de otro reino cuesta 2,2 veces más y avanza un 25% más despacio
 // Economía: rendimientos decrecientes (cada edificio extra del mismo tipo rinde menos), oro base más bajo y comida para las tropas
 const DIM_K=0.35, ECON_GOLD=2.5;   // oro/s por nivel de aserradero/granja/metalúrgica = ECON_GOLD * GOLD_X (100)
 const FOOD_BASE=1.5, FOOD_DIV=2000, HUNGER_GROW=0.25; // las tropas comen (tropas/POP_X)/FOOD_DIV comida por segundo; con hambre crecen un 75% más despacio

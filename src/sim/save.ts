@@ -38,6 +38,7 @@ function loadGame(d:any): string|null{
     tick=d.tick; diff=d.diff; over=d.over; spectating=d.spectating; P=d.P;
     players=[]; tilesOf=[];
     for(const q of d.players){
+      if(!q.gear) q.gear={tank:0,arty:0};
       players.push({...q, tiles:0, sumX:0, sumY:0,
         cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]]))});
       tilesOf.push([]);
