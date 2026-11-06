@@ -3,6 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
+setupWorld();
 this.__a = { setupWorld, newGame, gameTick, players, placeBuilding, canBuild, tilesOf, rel, sendPlane, buyWarplane, stepAir,
   get planes(){ return planes; }, get wplanes(){ return wplanes; }, set spawned(v){ spawned = v; }, get tick(){ return tick; }, set tick(v){ tick = v; } };`, ctx);
 const g = ctx.__a;

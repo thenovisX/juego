@@ -123,7 +123,7 @@ function sendBoat(p,ti,troops){
   const tx=ti%W, ty=(ti/W)|0; let best=null, bd=1e9;
   for(const b of ready){ const d=Math.hypot(wdx(b.x,tx),b.y-ty); if(d<bd){bd=d;best=b;} }
   if(bd>W*0.35) return "Ese destino está demasiado lejos de tus puertos.";
-  let dx=tx-best.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W;
+  let dx=wrapDx(tx-best.x);
   // ruta por mar más corta con giros de 90°, preferiendo mar abierto (nunca por tierra)
   const path=seaPath(best,{i:ti,x:tx,y:ty});
   if(!path) return "No hay ruta por mar hasta ahí: el destino tiene que dar al mar que alcanzan tus puertos.";
@@ -159,7 +159,7 @@ function launchMissile(p,type,ti){
   if(o>=0 && peaceful(p.id,o)) return "Tienes un pacto con ese reino.";
   const tx=ti%W, ty=(ti/W)|0; let best=null, bd=1e9;
   for(const b of silos){ const d=Math.hypot(wdx(b.x,tx),b.y-ty); if(d<bd){bd=d;best=b;} }
-  let dx=tx-best.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W;
+  let dx=wrapDx(tx-best.x);
   p.gold-=W8.cost; p.st.bombs++;
   missiles.push({owner:p.id,type,sx:best.x+0.5,sy:best.y+0.5,dx,dy:ty-best.y,t:0,dur:Math.max(25,bd/4)/(best.lvl||1),ti});
   if(o>=0) addOp(o,p.id,-30);

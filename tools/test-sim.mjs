@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
-vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nthis.__api={ setupWorld, newGame, gameTick, players, get tick(){return tick}, get me(){return me}, set spawned(v){ spawned=v }, get landTotal(){return landTotal}, spawnAt, borderCandidates, launchAttack };", ctx);
+vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nsetupWorld();\nthis.__api={ setupWorld, newGame, gameTick, players, get tick(){return tick}, get me(){return me}, set spawned(v){ spawned=v }, get landTotal(){return landTotal}, spawnAt, borderCandidates, launchAttack };", ctx);
 const g = ctx.__api;
 g.setupWorld(); g.newGame("Prueba", 25, 1);
 g.spawned = true;

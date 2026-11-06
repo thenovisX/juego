@@ -416,6 +416,8 @@ function loadFromFile(file){
   const rd=new FileReader();
   rd.onload=()=>{
     let data; try{ data=JSON.parse(rd.result); }catch(e){ alert("El archivo no es una partida válida."); return; }
+    const wantMap=data&&data.game==="hegemonia"?(data.map||"tierra"):MAPID;
+    if(wantMap!==MAPID&&mapList().some(m=>m.id===wantMap)) applyMap(wantMap); // la partida guardada es de otro mapa: se genera primero
     const why=loadGame(data); if(why){ alert(why); return; }
     setMode(null); closeDip(); closeProp(); flushPixels(true);
     document.getElementById("overlay").hidden=true;
