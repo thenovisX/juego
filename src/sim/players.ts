@@ -4,7 +4,7 @@ function makeName(used){ for(let k=0;k<400;k++){ const n=NAMES[(rnd()*NAMES.leng
 function hsl(h,s,l){ s/=100;l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l); const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1)); return [f(0)*255|0,f(8)*255|0,f(4)*255|0]; }
 function newPlayer(name,c,isBot){
   const id=players.length;
-  const p={id,name,c,isBot,alive:true,troops:700*POP_X,stance:"bal",tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
+  const p={id,name,c,isBot,alive:true,troops:700*POP_X,stance:"bal",gear:{tank:0,arty:0},tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
     cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]])),
     aggro:0.15+rnd()*0.25, thinkAt:(rnd()*20)|0, rival:-1, focus:-1, traitorUntil:0, lastHit:-1e9,
     res:{done:{},cur:null,prog:0}, st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};

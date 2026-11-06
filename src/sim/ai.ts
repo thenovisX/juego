@@ -34,6 +34,7 @@ function botThink(p){
   else if(p.gold>bCost(p,"tradehouse") && p.cnt.tradehouse<1 && partners(p)>=2) tryPlace("tradehouse");
   else if(p.gold>bCost(p,"temple") && p.cnt.temple<Math.min(3,p.tiles/6000) && p.happy<75) tryPlace("temple");
   else if(p.gold>bCost(p,"barracks") && p.cnt.barracks<Math.min(3,p.tiles/8000) && p.troops>st.max*0.8) tryPlace("barracks");
+  else if(p.gold>bCost(p,"arsenal") && p.cnt.arsenal<Math.min(2,p.tiles/9000) && p.tiles>6000 && !researchWhy(p,"arsenal") && (hit||p.tiles>10000)) tryPlace("arsenal");
   else if(p.gold>bCost(p,"port") && p.cnt.port===0 && s.coast.length && (s.neutral===0 || rnd()<0.15)) tryPlace("port",s.coast);
   else if(p.gold>bCost(p,"silo") && p.tiles>18000 && p.cnt.silo===0 && tick>1800) tryPlace("silo");
   else if(p.gold>bCost(p,"fort") && s.front.length && p.cnt.fort < p.tiles/6000) tryPlace("fort",s.front);
@@ -60,6 +61,8 @@ function botThink(p){
   if(p.B.airport.length && rnd()<0.1 && p.gold>WPLANE_COST*3 && wplanes.filter(w=>w.owner===p.id).length<1 && planes.some(s=>s.from!==p.id && canSeize(p.id,s.from))) buyWarplane(p);
   // marina: un buque de guerra (dos si es grande) cuando hay cargueros ajenos navegando
   if(p.B.port.length && rnd()<0.15 && p.gold>WSHIP_COST*3 && wships.filter(w=>w.owner===p.id).length<(p.tiles>15000?2:1) && tships.some(s=>s.from!==p.id && canSeize(p.id,s.from))) buyWarship(p);
+  // equipo: los bots compran tanques (y artillería) con oro cuando tienen arsenal
+  if(p.B.arsenal.some(b=>b.done<=tick) && rnd()<0.2){ if(p.gold>GEAR.tank.gold*3) buyGear(p,"tank"); else if(p.gold>GEAR.arty.gold*3 && !researchWhy(p,"artillery")) buyGear(p,"arty"); }
   // bombas
   if(p.rival>=0 && players[p.rival].alive && !peaceful(p.id,p.rival) && p.B.silo.some(b=>b.done<=tick) && tick>=(p.nextBomb||0) && rnd()<0.15*diff){
     const R=players[p.rival];
@@ -101,7 +104,7 @@ function botThink(p){
   let target=-1, best=-1e9;
   for(const [o,cnt] of s.enemies){ if(peaceful(p.id,o)) continue; const e=players[o], ratio=p.troops/Math.max(1,e.troops);
     const score=ratio*2+cnt*0.02+(o===p.rival?1:0)+(!players[o].isBot?0.3*diff:0)-op(p.id,o)/40;
-    if(ratio<0.7) continue; if(score>best){best=score;target=o;} }
+    if(ratio<0.9) continue; if(score>best){best=score;target=o;} }
   if(target>=0){ p.rival=target; launchAttack(p.id,target,p.troops*Math.max(0.3,Math.min(0.75,0.3+0.2*Math.log(Math.max(1,p.troops/Math.max(1,players[target].troops))))),borderCandidates(p.id,target)); return; }
   if(s.neutral===0 && !s.enemies.size && p.B.port.some(b=>b.done<=tick) && rnd()<0.4){
     const src=p.B.port[0];

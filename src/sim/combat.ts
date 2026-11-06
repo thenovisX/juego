@@ -7,7 +7,7 @@ function fortMult(d,i){
 function tileCost(att,def,i){
   const t=TER[terrain[i]]; let c;
   if(def<0) c=t.cost*0.7*POP_X;
-  else { const d=players[def], dens=d.troops/Math.max(1,d.tiles); c=t.cost*(1.5*POP_X+dens*0.9)*t.def*fortMult(def,i)*(wall[i]?4:1)*STANCE[d.stance||"bal"].def; }
+  else { const d=players[def], dens=d.troops/Math.max(1,d.tiles); const ar=artRed(players[att]); c=t.cost*(1.5*POP_X+dens*0.9)*t.def*(1+(fortMult(def,i)-1)*ar)*(1+(wall[i]?3:0)*ar)*STANCE[d.stance||"bal"].def*OCC_X*tankDef(d)*tankAtt(players[att]); }
   if(def>=0 && (players[def].betrayUntil||0)>tick) c*=0.5; // un traidor tiene la mitad de defensa un rato
   c*=STANCE[players[att].stance||"bal"].cost;
   if(fallout[i]>tick) c*=2.5;
@@ -92,7 +92,7 @@ function stepAttacks(){
   for(const a of attacks){
     const A=players[a.att], conq=[];
     let n=Math.min(a.q.length, Math.max(3, Math.floor(a.troops/(POP_X*20))), 220), stale=0;
-    n=Math.max(1,Math.round(n*STANCE[A.stance||"bal"].att));
+    n=Math.max(1,Math.round(n*STANCE[A.stance||"bal"].att*(a.def>=0?OCC_SPEED:1)));
     while(n-- > 0 && a.q.length){
       const k=(rnd()*a.q.length)|0, t=a.q[k]; a.q[k]=a.q[a.q.length-1]; a.q.pop();
       if(owner[t]===a.def && terrain[t]>0 && rnd()>TER_SPEED[terrain[t]]){ a.q.push(t); continue; } // terreno difícil: se avanza más despacio
@@ -102,7 +102,7 @@ function stepAttacks(){
       const c=tileCost(a.att,a.def,t);
       if(a.troops<c){ a.q.length=0; break; }
       a.troops-=c;
-      if(a.def>=0){ const D=players[a.def]; D.troops=Math.max(0,D.troops-(D.troops/Math.max(1,D.tiles))*0.8); if(a.def===me.id) Hooks.danger(); }
+      if(a.def>=0){ tankWear(A); const D=players[a.def]; D.troops=Math.max(0,D.troops-(D.troops/Math.max(1,D.tiles))*0.8); if(a.def===me.id) Hooks.danger(); }
       setOwner(t,a.att);
       if(a.def>=0) conq.push(t);
       if(!A.alive) break;

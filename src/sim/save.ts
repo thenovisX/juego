@@ -2,7 +2,7 @@
 // saveGame() devuelve un objeto JSON-serializable con todo el estado vivo (mapa, reinos, edificios, ejércitos,
 // diplomacia, comercio, aviones, barcos...). loadGame() lo restaura sobre un mundo ya generado (setupWorld).
 // El campo version permite detectar partidas de otra versión del juego.
-const SAVE_VERSION=3;
+const SAVE_VERSION=4;
 function rleEncode(a:ArrayLike<number>): number[]{
   const out:number[]=[]; let v=a[0], c=1;
   for(let i=1;i<a.length;i++){ if(a[i]===v) c++; else { out.push(v,c); v=a[i]; c=1; } }
@@ -38,6 +38,7 @@ function loadGame(d:any): string|null{
     tick=d.tick; diff=d.diff; over=d.over; spectating=d.spectating; P=d.P;
     players=[]; tilesOf=[];
     for(const q of d.players){
+      if(!q.gear) q.gear={tank:0,arty:0};
       players.push({...q, tiles:0, sumX:0, sumY:0,
         cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]]))});
       tilesOf.push([]);

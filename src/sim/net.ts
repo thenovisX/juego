@@ -48,6 +48,7 @@ function netInstall(){
   netWrap("sendGift", a=>{ netCmd("gift",a[1],a[2]); return true; });
   netWrap("sendPlane", a=>{ netCmd("plane",a[1]); return null; });
   netWrap("sendTrade", a=>{ netCmd("cargo",a[1]); return null; });
+  netWrap("buyGear", a=>{ netCmd("gear",a[1]); return null; });
   netWrap("buyWarship", ()=>{ netCmd("wship"); return null; });
   netWrap("buyWarplane", ()=>{ netCmd("wplane"); return null; });
   netWrap("setPatrol", a=>{ if(!isWater(a[1],a[2])) return "Elige un punto del mar."; netCmd("patrol",wships.indexOf(a[0]),a[1],a[2]); return null; });
@@ -93,7 +94,7 @@ function netAdvance(max:number){
 // Huella del estado para detectar desincronizaciones (la compara el servidor).
 function netChecksum(): number{
   let h=2166136261>>>0; const mix=(v:number)=>{ h=Math.imul(h^(v|0),16777619)>>>0; };
-  for(const p of players){ mix(p.tiles); mix(Math.floor(p.troops)); mix(Math.floor(p.gold)); mix(p.alive?1:0); }
+  for(const p of players){ mix(p.gear?p.gear.tank*7+p.gear.arty:0); mix(p.tiles); mix(Math.floor(p.troops)); mix(Math.floor(p.gold)); mix(p.alive?1:0); }
   for(let i=0;i<N;i+=97) mix(owner[i]);
   mix(buildings.length); mix(attacks.length); mix(boats.length); mix(missiles.length);
   return h;
@@ -126,6 +127,7 @@ function netExec(slot:number, c:any){
     case "gift": if(alive(c[1]) && isNum(c[2],1,1e15)) sendGift(slot,c[1],c[2]); break;
     case "plane": if(alive(c[1])) why=sendPlane(slot,c[1]); break;
     case "cargo": if(alive(c[1])) why=sendTrade(slot,c[1]); break;
+    case "gear": if(c[1]==="tank"||c[1]==="arty") why=buyGear(p,c[1]); break;
     case "wship": why=buyWarship(p); break;
     case "wplane": why=buyWarplane(p); break;
     case "patrol": { const w=isInt(c[1],0,1e6)?wships[c[1]]:null; if(w && w.owner===slot && isNum(c[2],0,W) && isNum(c[3],0,H)) why=setPatrol(w,c[2],c[3]); break; }
