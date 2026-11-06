@@ -3,7 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
-this.__t = { setupWorld, newGame, players, terrain, owner, spawnAt, stats, stepPolitica, hasCB, launchAttack, borderCandidates,
+setupWorld(); this.__t = { setupWorld, newGame, players, terrain, owner, spawnAt, stats, stepPolitica, hasCB, launchAttack, borderCandidates,
   adoptIdea, ideaCost, resolveEvent, IDEAS, EVENTS, hasIdea, tilesOf, W, N, INFAMY_COALITION,
   get tick(){ return tick; }, set tick(v){ tick = v; } };`, ctx);
 const g = ctx.__t; let bad = 0; const ok = (c, m) => { if (!c) { console.error("FALLO:", m); bad++; } };

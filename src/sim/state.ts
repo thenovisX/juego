@@ -1,9 +1,6 @@
 // ================= Estado =================
-const owner = new Int16Array(N).fill(-1);
-const bldAt = new Int32Array(N).fill(-1);
-const tileIdx = new Int32Array(N).fill(-1);
-const wall = new Uint8Array(N);
-const fallout = new Uint32Array(N);
+// Arrays por casilla: se (re)crean en allocWorld() al elegir mapa (selectMap).
+let owner: Int16Array, bldAt: Int32Array, tileIdx: Int32Array, wall: Uint8Array, fallout: Uint32Array;
 let players=[], tilesOf=[], buildings=[], attacks=[], boats=[], missiles=[], blasts=[], falloutQ=[];
 let landTotal=0, tick=0, me=null, started=false, paused=false, over=false, spawned=false, spectating=false, diff=1, speed=1;
 let netOn=false, netWinner=-1; // multijugador (ver net.ts)
@@ -77,12 +74,25 @@ const ST_LINK=40, ST_COV=14, BUILD_TIME=80, FORT_R=14, SAM_R=40, SAM_CD=150, NAP
 // Velocidad de avance de un ataque según el terreno de la casilla que se conquista (1 = normal)
 const TER_SPEED=[1,1,0.9,0.7,1,0.85];
 
-function nbs(i,out){ const x=i%W; out[0]= x===0 ? i+W-1 : i-1; out[1]= x===W-1 ? i-W+1 : i+1; out[2]= i>=W ? i-W : -1; out[3]= i<N-W ? i+W : -1; return out; }
+function nbs(i,out){ const x=i%W; out[0]= x===0 ? (WRAP ? i+W-1 : -1) : i-1; out[1]= x===W-1 ? (WRAP ? i-W+1 : -1) : i+1; out[2]= i>=W ? i-W : -1; out[3]= i<N-W ? i+W : -1; return out; }
 const NB=[0,0,0,0], NB2=[0,0,0,0];
-function wdx(a,b){ let d=Math.abs(a-b); return d>W/2? W-d : d; }
+function wdx(a,b){ let d=Math.abs(a-b); return WRAP && d>W/2? W-d : d; }
+// Diferencia horizontal por el camino más corto (en mapas que dan la vuelta puede cruzar la costura)
+function wrapX(x){ return WRAP ? ((x%W)+W)%W : Math.max(0,Math.min(W-1,x)); }
+function wrapDx(dx){ if(!WRAP) return dx; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W; return dx; }
 function disk(cx,cy,r,fn){ for(let dy=-r;dy<=r;dy++){ const y=cy+dy; if(y<0||y>=H) continue; const w=Math.floor(Math.sqrt(r*r-dy*dy));
-  for(let dx=-w;dx<=w;dx++) fn(y*W+((cx+dx)%W+W)%W); } }
+  for(let dx=-w;dx<=w;dx++) { if(!WRAP&&(cx+dx<0||cx+dx>=W)) continue; fn(y*W+((cx+dx)%W+W)%W); } } }
 
 // Casillas cuyo color debe repintarse (las consume el cliente; el servidor puede ignorarlas)
-const dirty = new Uint8Array(N); let dirtyList: number[]=[];
+let dirty: Uint8Array; let dirtyList: number[]=[];
 function markDirty(i){ if(!dirty[i]){ dirty[i]=1; dirtyList.push(i);} }
+
+// Crea (vacíos) todos los arrays por casilla del mapa activo y reinicia el estado de la partida.
+function allocWorld(){
+  owner=new Int16Array(N).fill(-1); bldAt=new Int32Array(N).fill(-1); tileIdx=new Int32Array(N).fill(-1);
+  wall=new Uint8Array(N); fallout=new Uint32Array(N); dirty=new Uint8Array(N); dirtyList=[];
+  players=[]; tilesOf=[]; buildings=[]; attacks=[]; boats=[]; missiles=[]; blasts=[]; falloutQ=[];
+  tick=0; me=null; started=false; paused=false; over=false; spawned=false; spectating=false; P=0; opin=null; rels.clear();
+  tships=[]; wships=[]; shots=[]; planes=[]; wplanes=[]; tradeCd.clear(); airCd.clear(); leaderTick=-1; leaderCache=null;
+  resetSeaBuffers();
+}

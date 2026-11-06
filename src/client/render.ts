@@ -9,8 +9,8 @@ function draw(now){
   ctx.fillStyle="#0b141d"; ctx.fillRect(-20,-20,vw+40,vh+40);
   ctx.imageSmoothingEnabled = cam.z<1.5;
   const z=cam.z;
-  for(const ox of [-W,0,W]){ const sx=(ox-cam.x)*z; if(sx>vw || sx+W*z<0) continue; ctx.drawImage(off,sx,-cam.y*z,W*z,H*z); }
-  const toS=(x,y)=>{ let sx=(x-cam.x); if(sx<-W/2) sx+=W; if(sx>W/2+vw/z) sx-=W; return [sx*z,(y-cam.y)*z]; };
+  for(const ox of (WRAP?[-W,0,W]:[0])){ const sx=(ox-cam.x)*z; if(sx>vw || sx+W*z<0) continue; ctx.drawImage(off,sx,-cam.y*z,W*z,H*z); }
+  const toS=(x,y)=>{ let sx=(x-cam.x); if(WRAP){ if(sx<-W/2) sx+=W; if(sx>W/2+vw/z) sx-=W; } return [sx*z,(y-cam.y)*z]; };
   ctx.textAlign="center"; ctx.textBaseline="middle";
   // frente atacado: mis casillas fronterizas que un enemigo está asaltando se ponen en rojo parpadeante
   { let hot=0; ctx.fillStyle=`rgba(255,40,40,${(0.4+0.2*Math.sin(now/180)).toFixed(2)})`;
@@ -135,10 +135,30 @@ function frame(now){
 }
 
 // ================= Inicio =================
+// Genera el mapa elegido y prepara su dibujo. Es lento en mapas grandes (varios segundos en el gigante).
+function applyMap(id){
+  setupWorld(id);
+  initPixels(); precomputeColors(); flushPixels(true);
+  mini.width=400; mini.height=Math.max(60,Math.round(400*H/W)); mini.style.height="auto"; mini.style.aspectRatio=W+" / "+H;
+  resize(); cam.z=cam.tz=fitZoom(); centerOn(W/2,H/2);
+  const mi=mapInfo(MAPID), bi=document.getElementById("botsIn");
+  bi.innerHTML=mi.bots.map((n,k)=>`<option value="${n}"${k===1?" selected":""}>${n} reinos</option>`).join("");
+  document.getElementById("mapDesc").textContent=mi.desc+" ("+W+"×"+H+" casillas, "+Math.round(100*landTotal/N)+"% tierra)";
+  document.getElementById("mapIn").value=MAPID;
+  try{ localStorage.setItem("hegemonia.map",MAPID); }catch(e){}
+}
+// Cambio de mapa desde el menú: primero pinta "Generando…" para que se vea antes de que el navegador se bloquee unos segundos.
+function pickMap(id){
+  const sb=document.getElementById("startBtn"), lb=document.getElementById("loadStartBtn"), sel=document.getElementById("mapIn");
+  sb.disabled=lb.disabled=sel.disabled=true; sb.textContent="Generando mapa…";
+  setTimeout(()=>{ applyMap(id); sb.disabled=lb.disabled=sel.disabled=false; sb.textContent="Empezar partida"; },30);
+}
 function init(){
-  setupWorld();
-  precomputeColors(); flushPixels(true);
-  resize(); cam.z=cam.tz=fitZoom(); clampCam();
+  const sel=document.getElementById("mapIn");
+  sel.innerHTML=mapList().map(m=>`<option value="${m.id}">${m.name}${m.giant?" 🌍":""}</option>`).join("");
+  sel.onchange=()=>pickMap(sel.value);
+  let id="tierra"; try{ const s=localStorage.getItem("hegemonia.map"); if(s&&mapList().some(m=>m.id===s)) id=s; }catch(e){}
+  applyMap(id);
   requestAnimationFrame(frame);
   document.getElementById("loadStartBtn").disabled=false;
   const sb=document.getElementById("startBtn"); sb.disabled=false; sb.textContent="Empezar partida";

@@ -2,7 +2,7 @@
 import fs from "node:fs"; import vm from "node:vm";
 const logs = [];
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
-vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nthis.__a={ setupWorld,newGame,gameTick,players,borderCandidates,launchAttack,Hooks,get attacks(){return attacks},get tick(){return tick},set tick(v){tick=v},set spawned(v){spawned=v},get me(){return me} };", ctx);
+vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nsetupWorld();\nthis.__a={ setupWorld,newGame,gameTick,players,borderCandidates,launchAttack,Hooks,get attacks(){return attacks},get tick(){return tick},set tick(v){tick=v},set spawned(v){spawned=v},get me(){return me} };", ctx);
 const g = ctx.__a; g.setupWorld(); g.newGame("T", 30, 1); g.spawned = true;
 for (let i = 0; i < 1500; i++) g.gameTick();
 g.Hooks.log = (m, k) => logs.push([m, k]);

@@ -13,7 +13,7 @@ function saveGame(): any{
   const fo:number[]=[], wl:number[]=[];
   for(let i=0;i<N;i++){ if(fallout[i]>tick) fo.push(i,fallout[i]); if(wall[i]) wl.push(i); }
   return {
-    game:"hegemonia", version:SAVE_VERSION, W, H, tick, diff, meId:me.id, over, spectating, P,
+    game:"hegemonia", version:SAVE_VERSION, map:MAPID, W, H, tick, diff, meId:me.id, over, spectating, P,
     players: players.map((p:any)=>{ const {cnt,B,net,netAt,...rest}=p; return rest; }),
     owner: rleEncode(owner), fallout: fo, wall: wl,
     buildings: buildings.filter((b:any)=>!b.dead).map((b:any)=>({t:b.t,i:b.i,owner:b.owner,done:isFinite(b.done)?b.done:null,cd:b.cd,lvl:b.lvl||1,need:b.need||null,stock:b.stock||0,store:b.store||null})),
@@ -29,7 +29,7 @@ function saveGame(): any{
 function loadGame(d:any): string|null{
   if(!d || d.game!=="hegemonia") return "Ese archivo no es una partida de Hegemonía.";
   if(d.version!==SAVE_VERSION) return `Es una partida de otra versión (${d.version}); este juego usa la ${SAVE_VERSION}.`;
-  if(d.W!==W || d.H!==H) return "La partida es de otro mapa.";
+  if((d.map||"tierra")!==MAPID || d.W!==W || d.H!==H) return "La partida es de otro mapa ("+mapInfo(d.map||"tierra").name+"): elige ese mapa antes de cargarla.";
   try{
     owner.fill(-1); bldAt.fill(-1); tileIdx.fill(-1); wall.fill(0); fallout.fill(0); dirty.fill(0); dirtyList=[];
     rleDecode(d.owner,owner);
