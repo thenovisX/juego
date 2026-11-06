@@ -10,6 +10,9 @@ function tileCost(att,def,i){
   else { const d=players[def], dens=d.troops/Math.max(1,d.tiles); c=t.cost*(1.5*POP_X+dens*0.9)*t.def*fortMult(def,i)*(wall[i]?4:1)*STANCE[d.stance||"bal"].def; }
   if(def>=0 && (players[def].betrayUntil||0)>tick) c*=0.5; // un traidor tiene la mitad de defensa un rato
   c*=STANCE[players[att].stance||"bal"].cost;
+  if(hasIdea(players[att],"disciplina")) c*=0.85;
+  if(def<0 && hasIdea(players[att],"expansion")) c*=0.75;
+  if(def>=0 && hasIdea(players[def],"patria")) c/=1.2;
   if(fallout[i]>tick) c*=2.5;
   return c;
 }
@@ -45,7 +48,8 @@ function recruit(p){
   if(p.gold<cost) return `Te faltan ${fmt(cost-p.gold)} de oro.`;
   const max=stats(p).max*1.05;
   if(p.troops>=max) return "Tu población ya está al máximo: construye ciudades o cuarteles.";
-  p.gold-=cost; p.troops=Math.min(max,p.troops+RECRUIT_TROOPS*lv); ri.free.cd=tick+RECRUIT_CD; return null;
+  const mats={comida:RECRUIT_FOOD*lv,hierro:RECRUIT_IRON*lv}, why=canPayMats(p,mats); if(why) return why;
+  takeMats(p,mats); p.gold-=cost; p.troops=Math.min(max,p.troops+RECRUIT_TROOPS*lv); ri.free.cd=tick+RECRUIT_CD; return null;
 }
 // Refuerzo a un aliado: le cedes parte de tus tropas (reagrupar cuesta 1 minuto).
 function sendReinforcements(from,to,frac){
@@ -63,6 +67,7 @@ function launchAttack(att,def,troops,cands){
   if(!cands.length || troops<1 || peaceful(att,def) || immune(def)) return false;
   players[att].troops-=troops;
   let a=attacks.find(a=>a.att===att && a.def===def);
+  if(!a) noteAggression(att,def,INFAMY_NOCB); else if(def>=0 && att!==def){ const D=players[def]; if(!D.hitBy) D.hitBy={}; D.hitBy[att]=tick; }
   if(a){ a.troops+=troops; for(const c of cands) a.q.push(c); }
   else { a={att,def,troops,q:cands,warn:-1e9}; attacks.push(a); }
   if(def>=0){ addOp(def,att,-6); if(!players[def].isBot && def!==att){ players[def].rival=att;
@@ -122,7 +127,7 @@ function sendBoat(p,ti,troops){
   const tx=ti%W, ty=(ti/W)|0; let best=null, bd=1e9;
   for(const b of ready){ const d=Math.hypot(wdx(b.x,tx),b.y-ty); if(d<bd){bd=d;best=b;} }
   if(bd>W*0.35) return "Ese destino está demasiado lejos de tus puertos.";
-  let dx=tx-best.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W;
+  let dx=wrapDx(tx-best.x);
   // ruta por mar más corta con giros de 90°, preferiendo mar abierto (nunca por tierra)
   const path=seaPath(best,{i:ti,x:tx,y:ty});
   if(!path) return "No hay ruta por mar hasta ahí: el destino tiene que dar al mar que alcanzan tus puertos.";
@@ -158,10 +163,10 @@ function launchMissile(p,type,ti){
   if(o>=0 && peaceful(p.id,o)) return "Tienes un pacto con ese reino.";
   const tx=ti%W, ty=(ti/W)|0; let best=null, bd=1e9;
   for(const b of silos){ const d=Math.hypot(wdx(b.x,tx),b.y-ty); if(d<bd){bd=d;best=b;} }
-  let dx=tx-best.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W;
+  let dx=wrapDx(tx-best.x);
   p.gold-=W8.cost; p.st.bombs++;
   missiles.push({owner:p.id,type,sx:best.x+0.5,sy:best.y+0.5,dx,dy:ty-best.y,t:0,dur:Math.max(25,bd/4)/(best.lvl||1),ti});
-  if(o>=0) addOp(o,p.id,-30);
+  if(o>=0){ addOp(o,p.id,-30); noteAggression(p.id,o,type==="missile"?INFAMY_MISSILE:INFAMY_NUKE); }
   if(o===me.id){ Hooks.log(`{{alarm}} ¡${W8.e} ${W8.n} de ${p.name} en camino hacia ti!`,"bad"); Hooks.sfx("alarm"); Hooks.danger(); }
   return null;
 }

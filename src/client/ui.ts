@@ -81,7 +81,7 @@ function openOwnBuilding(i){
   const extra=b.t==="barracks"?[[`{{recruit}} Reclutar · ${fmt(RECRUIT_COST*b.lvl)}`,()=>{ const why=recruit(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("good"); log("{{recruit}} Nuevas tropas reclutadas.","good"); } }]]:[];
   if(b.lvl>=MAX_LVL){ showProp(`${head}<br>Está al nivel máximo.`,extra.concat([["Cerrar",null]])); return; }
   const c=upCost(b);
-  showProp(`${head}<br>Mejorar a nivel ${b.lvl+1} cuesta <b>${fmt(c)}</b> {{gold}}: ${UP_DESC[b.t]}.`,
+  showProp(`${head}<br>Mejorar a nivel ${b.lvl+1} cuesta <b>${fmt(c)}</b> {{gold}} y ${Object.entries(upMat(b)).map(([r,n])=>r+" "+n).join(", ")}: ${UP_DESC[b.t]}.`,
     [[`{{up}} Mejorar · ${fmt(c)}`,()=>{ const why=upgradeBuilding(me,b); if(why){ log(why,"bad"); sfx("err"); } else { log(`{{up}} ${BT[b.t].n} mejorada a nivel ${b.lvl}.`,"good"); sfx("build"); } }]].concat(extra,[["Cerrar",null]]));
 }
 function attackAt(i){
@@ -117,16 +117,21 @@ function mkCard(parent,id,e,label,key,title,onclick,cls,info){ const b=document.
   b.innerHTML=`<kbd>${key}</kbd><span class="em">${e}</span><span class="lb">${label}</span><span class="co" id="${id}_c"></span>`;
   b.onclick=()=>{ onclick(); if(info) showInfo(info); }; if(info){ b.onmouseenter=()=>showInfo(info); b.onfocus=()=>showInfo(info); b.onmouseleave=()=>showInfo(null); }
   parent.appendChild(b); }
-const infoBT=t=>()=>{ const d=BT[t]; return `<span><b>${d.e} ${d.n}</b> · <span class="co">${fmt(bCost(me,t))} {{gold}}</span> — ${d.desc} <span class="mut">${d.where}${matText(t)}${d.max?"":""}</span></span>`; };
+const infoBT=t=>()=>{ const d=BT[t]; return `<span><b>${d.e} ${d.n}</b> · <span class="co">${fmt(bCost(me,t))} {{gold}}</span> — ${d.desc} <span class="mut">${d.where}${matText(t,me)}${d.max?"":""}</span></span>`; };
 const infoW=t=>()=>{ const d=WEAP[t]; return `<span><b>${d.e} ${d.n}</b> · ${fmt(d.cost)} {{gold}} — ${d.desc} <span class="mut">Necesita un Silo terminado. Elige el objetivo en el mapa (radio ${d.r}).</span></span>`; };
 const infoText=(e,n,txt,extra)=>()=>`<span><b>${e} ${n}</b> — ${txt} <span class="mut">${extra||""}</span></span>`;
-for(const t in BT) mkCard(paneOf[BT[t].cat],"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+" "+BT[t].where+matText(t),()=>{ setCat(BT[t].cat); toggleMode({k:"build",t}); },"",infoBT(t));
+for(const t in BT) mkCard(paneOf[BT[t].cat],"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+" "+BT[t].where+matText(t,me),()=>{ setCat(BT[t].cat); toggleMode({k:"build",t}); },"",infoBT(t));
 // ---- Investigación (pestaña Ciencia)
 const infoR=t=>()=>{ const R=RESEARCH[t], r=me.res, why=researchAvail(me,t), rate=rpRate(me);
   const st=r.done[t]?"Investigado.":r.cur===t?`En curso: ${Math.floor(r.prog)} / ${R.cost} puntos`+(rate>0?` · quedan ${fmtTime((R.cost-r.prog)/rate)}`:""):why?why:`Cuesta ${R.cost} puntos`+(rate>0?` · ${fmtTime(R.cost/rate)} con tus universidades`:" · construye una Universidad");
   return `<span><b>${R.e} ${R.n}</b> — ${R.desc} <span class="mut">${st} Tienes ${rate} punto${rate===1?"":"s"}/s (1 por nivel de universidad: con más universidades tardas menos).</span></span>`; };
 const fmtTime=s=>s>=60?Math.floor(s/60)+" min "+Math.round(s%60)+" s":Math.round(s)+" s";
 for(const t in RESEARCH){ mkCard(paneOf.sci,"r_"+t,RESEARCH[t].e,RESEARCH[t].n,"","Investigar: "+RESEARCH[t].desc,()=>{ const why=startResearch(me,t); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); log(`{{science}} Investigando ${RESEARCH[t].n}.`); } },"res",infoR(t)); document.querySelector("#r_"+t+" kbd").remove(); }
+// ---- Tradiciones (pestaña Nación)
+const infoI=k=>()=>{ const I=IDEAS[k], c=ideaCost(me), has=hasIdea(me,k);
+  return `<span><b>${I.e} ${I.n}</b> — ${I.desc} <span class="mut">${has?"Ya la tienes.":`Cuesta ${c} de autoridad (tienes ${Math.floor(me.pow||0)}, +${powRate(me).toFixed(1)}/s). Cada tradición nueva cuesta ${IDEA_STEP} más. La autoridad la dan las ciudades y universidades.`}</span></span>`; };
+for(const k in IDEAS) mkCard(paneOf.nat,"i_"+k,IDEAS[k].e,IDEAS[k].n,"","Tradición: "+IDEAS[k].desc,()=>{ const why=adoptIdea(me,k); if(why){ log(why,"bad"); sfx("err"); } else sfx("build"); },"res",infoI(k));
+for(const k in IDEAS) document.querySelector("#i_"+k+" kbd").remove();
 for(const t in WEAP) mkCard(paneOf.arm,"w_"+t,WEAP[t].e,WEAP[t].n,WEAP[t].key,WEAP[t].desc,()=>toggleMode({k:"weap",t}),"weap",infoW(t));
 mkCard(paneOf.arm,"w_ship","{{wship}}","Buque","B","Buque de guerra: patrulla desde tu puerto, intercepta cargueros enemigos y se queda su oro",()=>{ const why=buyWarship(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); selShip=wships.filter(w=>w.owner===me.id).pop(); setMode({k:"patrol"}); log("{{wship}} Buque de guerra botado. Toca el punto del mar donde quieres que patrulle: se quedará por esa zona y cañoneará a los cargueros enemigos que entren."); } },"weap",
   infoText("{{wship}}","Buque de guerra","patrulla una zona del mar y se queda con la carga de los cargueros ajenos (salvo socios y aliados).","Necesita un Puerto terminado."));
@@ -136,7 +141,7 @@ mkCard(paneOf.arm,"w_plane","{{wplane}}","Avión de guerra","V","Avión de guerr
   infoText("{{wplane}}","Avión de guerra","patrulla desde tu aeropuerto y derriba los aviones comerciales de reinos sin pacto contigo.","Necesita un Aeropuerto terminado."));
 refreshInfo();
 // ---- Órdenes de tropas
-const infoRecruit=()=>{ const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1; return `<span><b>{{recruit}} Reclutar</b> · <span class="co">${fmt(RECRUIT_COST*lv)} {{gold}}</span> — consigues <b>${fmt(RECRUIT_TROOPS*lv)}</b> tropas al instante. <span class="mut">Necesita un Cuartel terminado; cada cuartel descansa 25 s. Un cuartel de más nivel recluta más.</span></span>`; };
+const infoRecruit=()=>{ const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1; return `<span><b>{{recruit}} Reclutar</b> · <span class="co">${fmt(RECRUIT_COST*lv)} {{gold}}</span> y <b>${RECRUIT_FOOD*lv} comida + ${RECRUIT_IRON*lv} hierro</b> — consigues <b>${fmt(RECRUIT_TROOPS*lv)}</b> tropas al instante. <span class="mut">Necesita un Cuartel terminado; cada cuartel descansa 25 s. Un cuartel de más nivel recluta más.</span></span>`; };
 mkCard(paneOf.tro,"t_recruit","{{recruit}}","Reclutar","u","Gasta oro y consigue tropas al instante (necesita Cuartel)",()=>{ const why=recruit(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("good"); log("{{recruit}} Nuevas tropas reclutadas.","good"); } },"tro",infoRecruit);
 mkCard(paneOf.tro,"t_recall","{{retreat}}","Retirar","n","Retira las tropas de todos los frentes abiertos a tu reserva",()=>recallAll(),"tro",
   infoText("{{retreat}}","Retirar todo","las tropas que aún no han combatido en tus frentes vuelven a la reserva.","Para retirar un solo frente usa ↩ en el panel de frentes (arriba a la izquierda)."));
@@ -217,6 +222,11 @@ function offerToPlayer(from,type){
     ["Rechazar",()=>addOp(from,me.id,-8)]], tick+200);
 }
 
+let evtShown=-1;
+function showEvent(){
+  const E=EVENTS.find(x=>x.id===me.evt.id); if(!E) return; evtShown=me.evt.at;
+  showProp(`${E.e} <b>${E.n}.</b> ${E.d}`,E.o.map(([label,res],k)=>[`${label} (${res})`,()=>resolveEvent(me,k)]),me.evt.at+EVENT_WAIT);
+}
 const dipEl=document.getElementById("dip"); let dipFor=-1;
 function openDipAt(i){ if(i<0||!spawned) return; const o=owner[i]; if(o===me.id){ log("Ese es tu propio reino."); return; } if(o<0) return; openDip(o); }
 function openDip(o){ dipFor=o; renderDip(); dipEl.hidden=false; }
@@ -230,6 +240,8 @@ function renderDip(){
   if(r.ally) chips.push(`<span class="chip g">{{ally}} Aliados</span>`);
   else if(r.nap>tick) chips.push(`<span class="chip g">{{nap}} No agresión · ${Math.ceil((r.nap-tick)/10)} s</span>`);
   if(r.trade) chips.push(`<span class="chip g">{{trade}} Comercio</span>`);
+  if(hasCB(me.id,dipFor)) chips.push(`<span class="chip g">{{shield}} Casus belli</span>`); else chips.push(`<span class="chip">{{warn}} Sin casus belli: atacarle da infamia</span>`);
+  if((p.infamy||0)>=INFAMY_COALITION) chips.push(`<span class="chip r">{{warn}} Agresor infame</span>`);
   if(attacks.some(a=>a.att===dipFor&&a.def===me.id)) chips.push(`<span class="chip r">{{attack}} Te está atacando</span>`);
   if(p.traitorUntil>tick) chips.push(`<span class="chip r">{{traitor}} Traidor${p.betrayals>1?" x"+p.betrayals:""}</span>`);
   const pct=Math.round(ratio*100), siloOk=me.B.silo.some(b=>b.done<=tick), mil=[], trd=[];
@@ -303,7 +315,11 @@ function updateHud(){
     m.style.width=h+"%"; m.style.background=col; document.getElementById("hapV").textContent=h;
     document.getElementById("hapE").textContent=h>=75?"{{f1}}":h>=55?"{{f2}}":h>=40?"{{f3}}":h>=25?"{{f4}}":"{{f5}}"; }
   { const t=matTotals(me); document.getElementById("mats").textContent=RES.map(r=>RES_E[r]+" "+fmt(t[r])).join("   "); }
-  document.getElementById("hGrow").textContent="+"+fmt(st.grow)+"/s";
+  { const inf=Math.round(me.infamy||0), c=ideaCost(me);
+    document.getElementById("nation").innerHTML=`{{crown}} ${Math.floor(me.pow||0)} <small>+${powRate(me).toFixed(1)}/s</small>`+(ideaCount(me)<IDEAS_N?` · tradición: ${c}`:"")+(inf>0?` · <span style="color:${inf>=INFAMY_COALITION?"#e8584a":"#e0b158"}">{{warn}} infamia ${inf}</span>`:"");
+    for(const k in IDEAS){ const el=document.getElementById("i_"+k), has=hasIdea(me,k); el.classList.toggle("on",has); document.getElementById("i_"+k+"_c").textContent=has?"✔":c; el.disabled=has||(me.pow||0)<c||!me.alive; } }
+  if(me.evt && !propOpen && me.evt.at!==evtShown) showEvent();
+  document.getElementById("hGrow").textContent="+"+fmt(st.grow)+"/s · {{comida}}"+(st.food.make>=st.food.use?"+":"")+(st.food.make-st.food.use).toFixed(1)+"/s"+(me.hunger?" ¡HAMBRE!":"");
   document.getElementById("hGold").textContent=fmt(me.gold);
   document.getElementById("hInc").textContent="+"+fmt(st.inc)+"/s"+(st.tr?` · {{trade}}${st.tr}`:"")+(st.net.mines+st.net.cities+st.net.ports?` · {{station}}${st.net.mines+st.net.cities+st.net.ports}`:"");
   document.getElementById("hLand").textContent=(me.tiles/landTotal*100).toFixed(2)+"%";
@@ -352,6 +368,7 @@ function showHelp(){
   <p><b>{{gold}} Ganar oro:</b> la base son los <b>impuestos</b> (deslizador). Encima: {{sawmill}} aserraderos, {{farm}} granjas y {{foundry}} metalúrgicas; {{market}} <b>mercados</b> junto a ciudades; {{mint}} <b>casas de la moneda</b> junto a minas; {{tradehouse}} <b>casas de comercio</b> por cada socio comercial. El oro NO depende de cuánta población tengas.</p>
   <p><b>Felicidad:</b> más impuestos = pueblo descontento. Los {{temple}} templos la suben para que puedas cobrar más sin revueltas.</p>
   <p><b>{{science}} Ciencia:</b> construye {{university}} <b>Universidades</b> (pestaña Ciencia): cada una da 1 punto de investigación por segundo. Con ellos investigas, de una en una, lo que desbloquea Casas de la moneda, Casas de comercio, Antiaéreas, Aeropuertos, Silos y las bombas atómica y H. Cuantas más universidades tengas, antes lo desbloqueas.</p>
+  <p><b>{{crown}} Nación:</b> tus ciudades y universidades generan <b>Autoridad</b>, que se gasta en <b>tradiciones</b> (bonos permanentes, pestaña Nación). Atacar a un reino sin <b>casus belli</b> (que él te haya atacado hace poco, sea un traidor o un agresor infame) te da <b>infamia</b>: el pueblo se inquieta y los reinos desconfían. Cada pocos minutos ocurre un <b>evento</b> en tu reino y decides qué hacer.</p>
   <p><b>Bombardear:</b> con un {{silo}} Silo terminado se desbloquean misil, atómica y bomba H (8, 9, 0). Las {{sam}} Antiaéreas las derriban.</p>
   <p><b>Clic derecho</b> (o pulsación larga) sobre un reino: atacar, enviar barco, lanzar misil/bomba, pactos, comercio y refuerzos a aliados.</p>
   <p><b>Comercio:</b> con acuerdo comercial y {{port}} puertos puedes enviar {{cargo}} cargueros que dan oro. Las {{station}} Estaciones (a menos de 40 una de otra) conectan minas, ciudades y puertos cercanos (radio 14): +50% de producción y exportación.</p>
@@ -416,6 +433,8 @@ function loadFromFile(file){
   const rd=new FileReader();
   rd.onload=()=>{
     let data; try{ data=JSON.parse(rd.result); }catch(e){ alert("El archivo no es una partida válida."); return; }
+    const wantMap=data&&data.game==="hegemonia"?(data.map||"tierra"):MAPID;
+    if(wantMap!==MAPID&&mapList().some(m=>m.id===wantMap)) applyMap(wantMap); // la partida guardada es de otro mapa: se genera primero
     const why=loadGame(data); if(why){ alert(why); return; }
     setMode(null); closeDip(); closeProp(); flushPixels(true);
     document.getElementById("overlay").hidden=true;

@@ -1,9 +1,6 @@
 // ================= Estado =================
-const owner = new Int16Array(N).fill(-1);
-const bldAt = new Int32Array(N).fill(-1);
-const tileIdx = new Int32Array(N).fill(-1);
-const wall = new Uint8Array(N);
-const fallout = new Uint32Array(N);
+// Arrays por casilla: se (re)crean en allocWorld() al elegir mapa (selectMap).
+let owner: Int16Array, bldAt: Int32Array, tileIdx: Int32Array, wall: Uint8Array, fallout: Uint32Array;
 let players=[], tilesOf=[], buildings=[], attacks=[], boats=[], missiles=[], blasts=[], falloutQ=[];
 let landTotal=0, tick=0, me=null, started=false, paused=false, over=false, spawned=false, spectating=false, diff=1, speed=1;
 let netOn=false, netWinner=-1; // multijugador (ver net.ts)
@@ -19,14 +16,15 @@ const CATS: any = {
   log:{n:"Logística",      e:"{{station}}", tip:"Conectan tu reino: materiales por vías, comercio por mar y por aire."},
   arm:{n:"Armamento", short:"Armas",      e:"{{missile}}", tip:"Silo para misiles y bombas, y flotas o aviones de guerra para cazar el comercio enemigo."},
   sci:{n:"Ciencia",        e:"{{science}}", tip:"Las universidades generan puntos de investigación. Cuantas más universidades, antes desbloqueas edificios y armas avanzadas."},
+  nat:{n:"Nación", short:"Nación", e:"{{crown}}", tip:"Tradiciones: gasta Autoridad (la dan tus ciudades y universidades) en bonos permanentes. Atacar a un reino sin casus belli te da infamia."},
   tro:{n:"Órdenes",        e:"{{attack}}",  tip:"Reclutar, retirar o reforzar las tropas que están en combate."},
 };
 // desc = para qué sirve (con números), where = dónde / qué necesita, r = radio de efecto, max = máximo permitido
 const BT = {
-  sawmill:{cat:"eco", n:"Aserradero", e:"{{sawmill}}", key:"w", base:30000, mul:1.4, desc:"+400 oro/s y produce madera.", where:"Solo en bosque."},
-  farm:{cat:"eco", n:"Granja", e:"{{farm}}", key:"f", base:30000, mul:1.4, desc:"+400 oro/s y produce comida.", where:"Solo en llanura."},
-  mine:{cat:"eco", n:"Mina", e:"{{mine}}", key:"2", base:15000, mul:1.45, desc:"Produce piedra (hierro en montaña) y da empleo: +25% de impuestos por cada mina (el doble en montaña) y más felicidad.", where:"Cualquier terreno propio; en montaña da el doble de empleo."},
-  foundry:{cat:"eco", n:"Metalúrgica", e:"{{foundry}}", key:"i", base:40000, mul:1.4, desc:"+400 oro/s y produce hierro.", where:"Cualquier terreno propio."},
+  sawmill:{cat:"eco", n:"Aserradero", e:"{{sawmill}}", key:"w", base:30000, mul:1.4, desc:"+250 oro/s y produce madera (cada aserradero extra rinde menos oro, pero la madera se gasta en obras y mejoras: haz más).", where:"Solo en bosque."},
+  farm:{cat:"eco", n:"Granja", e:"{{farm}}", key:"f", base:30000, mul:1.4, desc:"+250 oro/s y produce comida. Tus tropas comen: sin granjas suficientes pasan hambre y crecen muy despacio.", where:"Solo en llanura."},
+  mine:{cat:"eco", n:"Mina", e:"{{mine}}", key:"2", base:15000, mul:1.45, desc:"Produce piedra (hierro en montaña) y da empleo: +20% de impuestos por la primera mina (cada una extra rinde menos; el doble en montaña) y más felicidad. Las obras y mejoras gastan cada vez más piedra.", where:"Cualquier terreno propio; en montaña da el doble de empleo."},
+  foundry:{cat:"eco", n:"Metalúrgica", e:"{{foundry}}", key:"i", base:40000, mul:1.4, desc:"+250 oro/s y produce hierro (armas, ciudades, silos; cada metalúrgica extra rinde menos oro).", where:"Cualquier terreno propio."},
   market:{cat:"eco", n:"Mercado", e:"{{market}}", key:"r", base:45000, mul:1.45, r:20, desc:"+250 oro/s por cada ciudad a menos de 20 casillas (hasta 4 ciudades).", where:"Necesita una ciudad cerca (radio 20)."},
   mint:{cat:"eco", n:"Casa de la moneda", e:"{{mint}}", key:"c", base:90000, mul:1.6, r:20, max:3, desc:"+200 oro/s fijos y +150 oro/s por cada mina o metalúrgica a menos de 20 casillas (hasta 5).", where:"Necesita una mina o metalúrgica cerca (radio 20). Máx. 3."},
   tradehouse:{cat:"eco", n:"Casa de comercio", e:"{{tradehouse}}", key:"x", base:60000, mul:1.5, max:2, desc:"+300 oro/s por cada acuerdo comercial activo (hasta 5 socios).", where:"No depende del sitio. Máx. 2. Firma acuerdos en Diplomacia."},
@@ -67,17 +65,34 @@ const STANCE = {
   def:{n:"Defensiva",   e:"{{stance_def}}", key:"l", att:0.6, cost:1,   def:1.4, desc:"Tus ataques avanzan un 40% más despacio, pero eres un 40% más difícil de conquistar."},
 };
 const RECRUIT_TROOPS=20000, RECRUIT_COST=30000, RECRUIT_CD=250, REINF_CD=600;
+// Economía: rendimientos decrecientes (cada edificio extra del mismo tipo rinde menos), oro base más bajo y comida para las tropas
+const DIM_K=0.35, ECON_GOLD=2.5;   // oro/s por nivel de aserradero/granja/metalúrgica = ECON_GOLD * GOLD_X (100)
+const FOOD_BASE=1.5, FOOD_DIV=2000, HUNGER_GROW=0.25; // las tropas comen (tropas/POP_X)/FOOD_DIV comida por segundo; con hambre crecen un 75% más despacio
+const RECRUIT_FOOD=60, RECRUIT_IRON=20; // materiales por nivel de cuartel al reclutar
 const MKT_R=20, MKT_MAX=4, MINT_R=20, MINT_MAX=5, TRADE_MAX=5;
 const ST_LINK=40, ST_COV=14, BUILD_TIME=80, FORT_R=14, SAM_R=40, SAM_CD=150, NAP_TIME=3000, ALLY_TIME=6000, IMMUNE_TIME=450, BETRAY_TIME=300, SAM_HIT=0.75, SAM_HIT_H=0.4, ANNEX_MAX=400;
 // Velocidad de avance de un ataque según el terreno de la casilla que se conquista (1 = normal)
 const TER_SPEED=[1,1,0.9,0.7,1,0.85];
 
-function nbs(i,out){ const x=i%W; out[0]= x===0 ? i+W-1 : i-1; out[1]= x===W-1 ? i-W+1 : i+1; out[2]= i>=W ? i-W : -1; out[3]= i<N-W ? i+W : -1; return out; }
+function nbs(i,out){ const x=i%W; out[0]= x===0 ? (WRAP ? i+W-1 : -1) : i-1; out[1]= x===W-1 ? (WRAP ? i-W+1 : -1) : i+1; out[2]= i>=W ? i-W : -1; out[3]= i<N-W ? i+W : -1; return out; }
 const NB=[0,0,0,0], NB2=[0,0,0,0];
-function wdx(a,b){ let d=Math.abs(a-b); return d>W/2? W-d : d; }
+function wdx(a,b){ let d=Math.abs(a-b); return WRAP && d>W/2? W-d : d; }
+// Diferencia horizontal por el camino más corto (en mapas que dan la vuelta puede cruzar la costura)
+function wrapX(x){ return WRAP ? ((x%W)+W)%W : Math.max(0,Math.min(W-1,x)); }
+function wrapDx(dx){ if(!WRAP) return dx; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W; return dx; }
 function disk(cx,cy,r,fn){ for(let dy=-r;dy<=r;dy++){ const y=cy+dy; if(y<0||y>=H) continue; const w=Math.floor(Math.sqrt(r*r-dy*dy));
-  for(let dx=-w;dx<=w;dx++) fn(y*W+((cx+dx)%W+W)%W); } }
+  for(let dx=-w;dx<=w;dx++) { if(!WRAP&&(cx+dx<0||cx+dx>=W)) continue; fn(y*W+((cx+dx)%W+W)%W); } } }
 
 // Casillas cuyo color debe repintarse (las consume el cliente; el servidor puede ignorarlas)
-const dirty = new Uint8Array(N); let dirtyList: number[]=[];
+let dirty: Uint8Array; let dirtyList: number[]=[];
 function markDirty(i){ if(!dirty[i]){ dirty[i]=1; dirtyList.push(i);} }
+
+// Crea (vacíos) todos los arrays por casilla del mapa activo y reinicia el estado de la partida.
+function allocWorld(){
+  owner=new Int16Array(N).fill(-1); bldAt=new Int32Array(N).fill(-1); tileIdx=new Int32Array(N).fill(-1);
+  wall=new Uint8Array(N); fallout=new Uint32Array(N); dirty=new Uint8Array(N); dirtyList=[];
+  players=[]; tilesOf=[]; buildings=[]; attacks=[]; boats=[]; missiles=[]; blasts=[]; falloutQ=[];
+  tick=0; me=null; started=false; paused=false; over=false; spawned=false; spectating=false; P=0; opin=null; rels.clear();
+  tships=[]; wships=[]; shots=[]; planes=[]; wplanes=[]; tradeCd.clear(); airCd.clear(); leaderTick=-1; leaderCache=null;
+  resetSeaBuffers();
+}

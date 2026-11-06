@@ -21,7 +21,7 @@ function sendPlane(a:number,b:number): string|null{
   const pa=readyAirports(players[a]), pb=readyAirports(players[b]); let best:any=null, bd=1e9;
   for(const x of pa) for(const y of pb){ if(x===y) continue; const d=Math.hypot(wdx(x.x,y.x),x.y-y.y); if(d>0 && d<bd){ bd=d; best=[x,y]; } }
   if(!best) return "No hay dos aeropuertos distintos.";
-  const [x,y]=best; let dx=y.x-x.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W; const dy=y.y-x.y, d=Math.hypot(dx,dy);
+  const [x,y]=best; let dx=wrapDx(y.x-x.x); const dy=y.y-x.y, d=Math.hypot(dx,dy);
   planes.push({from:a,to:b,x:x.x+0.5,y:x.y+0.5,vx:dx/d,vy:dy/d,left:d,trail:[[x.x+0.5,x.y+0.5]],val:airValue(players[a])});
   airCd.set(a*1024+b,tick+AIR_CD); return null;
 }
@@ -52,7 +52,7 @@ function buyWarplane(p:any): string|null{
   return null;
 }
 function flyToward(w:any,tx:number,ty:number,speed:number){
-  let dx=tx-w.x; if(dx>W/2) dx-=W; if(dx<-W/2) dx+=W; const dy=ty-w.y, d=Math.hypot(dx,dy); if(d<0.01) return;
+  let dx=wrapDx(tx-w.x); const dy=ty-w.y, d=Math.hypot(dx,dy); if(d<0.01) return;
   const k=Math.min(speed,d); w.x=((w.x+dx/d*k)%W+W)%W; w.y+=dy/d*k;
   w.trail.push([w.x,w.y]); if(w.trail.length>120) w.trail.shift();
 }

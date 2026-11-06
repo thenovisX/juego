@@ -23,6 +23,7 @@
   <div class="tax"><span class="lbl">{{tax}} Impuestos <b id="taxV" class="num">10%</b></span>
     <input id="tax" type="range" min="0" max="80" step="5" value="10" aria-label="Tasa de impuestos">
     <div class="hap" title="Felicidad del pueblo: con menos de 50 baja la economía; con menos de 25 hay revueltas"><span id="hapE">{{f2}}</span><div class="meter"><div id="hapM"></div></div><b id="hapV" class="num">80</b></div></div>
+  <div id="nation" class="mats" title="Autoridad para tradiciones e infamia por atacar sin casus belli"></div>
   <div id="mats" class="mats" title="Materiales almacenados en minas, aserraderos, granjas y bancos"></div>
   <div id="wars" title="Frentes abiertos: ↩ retira las tropas, ➕ manda un 25% más de tu reserva"></div>
 </div>
@@ -75,13 +76,15 @@
   <p class="sub">Conquista el mundo casilla a casilla. Expándete por tierra libre, construye tu economía, firma pactos y, cuando llegue el momento, lanza tus misiles.</p>
   <div class="f">
     <label for="nameIn">Tu reino<input id="nameIn" maxlength="18" value="Reino de juc"></label>
+    <label for="mapIn" class="wide">Mapa<select id="mapIn"><option>Tierra</option></select></label>
     <label for="botsIn">Rivales<select id="botsIn"><option value="25">25 reinos</option><option value="45" selected>45 reinos</option><option value="70">70 reinos</option></select></label>
     <label for="diffIn">Dificultad<select id="diffIn"><option value="0.7">Fácil</option><option value="1" selected>Normal</option><option value="1.35">Difícil</option></select></label>
   </div>
+  <p class="sub" id="mapDesc" style="font-size:.85em;opacity:.8;min-height:2.6em"></p>
   <button class="go" id="startBtn" type="button" disabled>Cargando mapa…</button>
   <button class="btn go2" id="loadStartBtn" type="button" disabled>{{load}} Cargar partida guardada</button>
   <input id="loadFile" type="file" accept=".json,application/json" hidden>
 </div></div>
-<script src="dist/game.js?v=18"></script>
+<script src="dist/game.js?v=19"></script>
 </body>
 </html>

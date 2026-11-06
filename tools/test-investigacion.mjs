@@ -3,7 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout, Blob: class {}, URL });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
-this.__u = { setupWorld, newGame, players, placeBuilding, canBuild, tilesOf, spawnAt, terrain, owner, W, stepResearch, startResearch, rpRate, launchMissile, saveGame, loadGame, RESEARCH,
+setupWorld(); this.__u = { setupWorld, newGame, players, placeBuilding, canBuild, tilesOf, spawnAt, terrain, owner, W, stepResearch, startResearch, rpRate, launchMissile, saveGame, loadGame, RESEARCH,
   set tick(v){ tick=v; }, get tick(){ return tick; } };`, ctx);
 const g = ctx.__u; let fail = 0; const ok = (c, m) => { console.log((c ? "OK  " : "FALLO ") + m); if (!c) fail++; };
 g.setupWorld(); g.newGame("T", 5, 1);

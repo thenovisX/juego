@@ -5,6 +5,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
+setupWorld();
 this.__u = { setupWorld, newGame, players, placeBuilding, canBuild, stats, upCost, upgradeBuilding, buildings, terrain, owner, spawnAt, tilesOf, happyTarget,
   get tick(){ return tick; } };`, ctx);
 const g = ctx.__u;
@@ -14,6 +15,8 @@ let spot = -1; for (let i = (g.terrain.length / 3) | 0; i < g.terrain.length; i+
 g.spawnAt(me, spot % 2000, (spot / 2000) | 0, 12);
 me.gold = 1e12;
 const T = g.tilesOf[me.id];
+// banco con materiales para pagar las mejoras
+let bSpot = T.find(i => !g.canBuild(me, "bank", i)); g.placeBuilding(me, "bank", bSpot, true); g.buildings[g.buildings.length - 1].store = { piedra: 500, madera: 500, hierro: 500, comida: 500 };
 const free = type => T.find(i => !g.canBuild(me, type, i));
 
 // granja (llanura): da oro

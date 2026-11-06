@@ -18,7 +18,7 @@ function gameTick(){
   if(!started || !spawned) return;
   if(netOn){ if(netWinner>=0) return; } else if(paused || (over && !spectating)) return;
   tick++;
-  stepEconomy(); stepAttacks(); stepBoats(); stepMissiles(); stepTrade(); stepNavy(); stepAir(); stepTax(); stepResearch(); stepMaterials(); stepFallout(); stepDiplomacy();
+  stepEconomy(); stepAttacks(); stepBoats(); stepMissiles(); stepTrade(); stepNavy(); stepAir(); stepTax(); stepResearch(); stepMaterials(); stepFallout(); stepDiplomacy(); stepPolitica();
   for(const p of players){ if(p.isBot && p.alive && (tick+p.thinkAt)%10===0) botThink(p); }
   Hooks.tick(tick);
   if(netOn){ // multijugador: gana quien llegue al 60% del mundo, y la partida acaba para todos

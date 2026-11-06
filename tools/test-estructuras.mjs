@@ -3,6 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
+setupWorld();
 this.__u = { setupWorld, newGame, players, placeBuilding, canBuild, stats, buildings, owner, terrain, spawnAt, tilesOf, happyTarget, bCost, refreshEff,
   recruit, setStance, tileCost, launchAttack, recallAttack, reinforceAttack, borderCandidates, sendReinforcements, rel, attacks: ()=>attacks, W, POP_X, BT,
   set tick(v){ tick=v; }, get tick(){ return tick; } };`, ctx);
@@ -33,6 +34,7 @@ const h0 = g.happyTarget(me); g.placeBuilding(me, "temple", at(10, 4), true); ok
 ok(g.recruit(me) === "Necesitas un Cuartel terminado.", "sin cuartel no se recluta");
 const max0 = g.stats(me).max; g.placeBuilding(me, "barracks", at(-10, -5), true);
 ok(g.stats(me).max - max0 === 1000 * g.POP_X, "cuartel +100.000 de población máxima");
+g.placeBuilding(me, "bank", at(-20, 10), true); g.buildings[g.buildings.length - 1].store = { piedra: 500, madera: 500, hierro: 500, comida: 500 };
 me.troops = 1000; const gold0 = me.gold; ok(g.recruit(me) === null && me.troops === 21000 && gold0 - me.gold === 30000, "reclutar: +20.000 tropas por 30.000 de oro");
 ok(typeof g.recruit(me) === "string", "el cuartel descansa tras reclutar");
 // posturas

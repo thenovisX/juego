@@ -1,7 +1,7 @@
 // Escenario sin navegador: un buque de guerra intercepta un carguero ajeno y se queda su oro; conquista total = botín.
 import fs from "node:fs"; import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
-vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nthis.__a={ setupWorld,newGame,gameTick,players,placeBuilding,canBuild,tilesOf,coastal,rel,peaceful,sendTrade,buyWarship,get tships(){return tships},stepTrade,stepNavy,get wships(){return wships},eliminate,get tick(){return tick},set spawned(v){spawned=v}, set tick(v){tick=v} };", ctx);
+vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nsetupWorld();\nthis.__a={ setupWorld,newGame,gameTick,players,placeBuilding,canBuild,tilesOf,coastal,rel,peaceful,sendTrade,buyWarship,get tships(){return tships},stepTrade,stepNavy,get wships(){return wships},eliminate,get tick(){return tick},set spawned(v){spawned=v}, set tick(v){tick=v} };", ctx);
 const g = ctx.__a; g.setupWorld(); g.newGame("T", 60, 1); g.spawned = true;
 for (let i = 0; i < 2500; i++) g.gameTick();
 const port = p => { for (const i of g.tilesOf[p.id]) if (g.coastal(i) && !g.canBuild(p, "port", i)) { g.placeBuilding(p, "port", i, true); return true; } return false; };

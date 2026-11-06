@@ -3,6 +3,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
+setupWorld();
 this.__b = { setupWorld, newGame, gameTick, players, buildings, rels, get tick(){ return tick; }, set spawned(v){ spawned = v; }, get landTotal(){ return landTotal; } };`, ctx);
 const g = ctx.__b;
 g.setupWorld(); g.newGame("T", 45, 1); g.spawned = true;

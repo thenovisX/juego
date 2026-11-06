@@ -12,11 +12,52 @@ const MAT_COST:any={
   mint:{hierro:50}, temple:{piedra:30}, barracks:{hierro:40,madera:20},
 };
 const PROD_RATE=2, PROD_CAP=200, BANK_CAP=500, MAT_FLOW=25;
+// Las obras nuevas piden más material cuanto más tengas de ese tipo (1.º y 2.º productor gratis en materiales)
+const GROW_MAT:any={mine:"madera",sawmill:"piedra",farm:"madera"};
+const EXTRA_MAT:any={university:{piedra:40,madera:30}, market:{madera:30}, fort:{piedra:40}, tradehouse:{madera:30,hierro:20}};
+function matCost(p:any,t:string): any{
+  const n=p?p.cnt[t]:0, base:any={...(MAT_COST[t]||EXTRA_MAT[t]||{})};
+  if(GROW_MAT[t]&&n>=2) base[GROW_MAT[t]]=20*(n-1);
+  const f=1+0.3*n; for(const r in base) base[r]=Math.ceil(base[r]*(t in GROW_MAT?1:f));
+  return Object.keys(base).length?base:null;
+}
+// Mejoras: además de oro piden materiales (suben con el nivel)
+function upMat(b:any): any{
+  const m=30*Math.pow(2,(b.lvl||1)-1), t=b.t;
+  if(t==="mine") return {madera:m};
+  if(t==="sawmill") return {piedra:m};
+  if(t==="farm") return {madera:m,piedra:m/2};
+  if(t==="foundry") return {piedra:m,madera:m/2};
+  return {piedra:m,hierro:m/2};
+}
+function canPayMats(p:any,c:any): string|null{
+  if(!c) return null; const t=matTotals(p);
+  const miss=Object.keys(c).filter(r=>t[r]<c[r]).map(r=>`${r} ${Math.ceil(c[r]-t[r])}`);
+  return miss.length?"Te faltan materiales: "+miss.join(", ")+".":null;
+}
+function takeMats(p:any,c:any,partial?:boolean): number{
+  let got=0; for(const r in c){ let need=c[r];
+    for(const b of buildings){ if(need<=0) break; if(b.dead||b.owner!==p.id||b.done>tick) continue;
+      if(resOf(b)===r){ const t=Math.min(need,b.stock||0); b.stock=(b.stock||0)-t; need-=t; got+=t; }
+      else if(b.store){ const t=Math.min(need,b.store[r]); b.store[r]-=t; need-=t; got+=t; } } }
+  return got;
+}
+// Comida: las tropas comen cada segundo; las granjas producen. Sin comida suficiente hay hambre.
+function foodUse(p:any): number{ return p.troops/POP_X/FOOD_DIV; }
+function foodMake(p:any): number{ let n=FOOD_BASE; // FOOD_BASE = huertos de los pueblos, gratis
+  for(const b of p.B.farm) if(b.done<=tick) n+=PROD_RATE*(b.lvl||1); return n; }
+function stepFood(){
+  for(const p of players){ if(!p.alive) continue; const use=foodUse(p); let hungry:boolean;
+    if(p.isBot) hungry = foodMake(p) < use*0.9;
+    else { const need=use-FOOD_BASE; hungry = need>0 && takeMats(p,{comida:need}) < need-0.01; }
+    if(hungry && !p.hunger && p===me){ Hooks.log("{{comida}} Tus tropas pasan hambre: construye más granjas o tendrás menos refuerzos.","bad"); Hooks.sfx("alarm"); }
+    p.hunger=hungry; }
+}
 function resOf(b:any): string|null{
   return b.t==="mine"?"piedra":b.t==="foundry"?"hierro":b.t==="sawmill"?"madera":b.t==="farm"?"comida":null;
 }
-function matText(t:string): string{
-  const c=MAT_COST[t]; return c?" · Materiales: "+Object.entries(c).map(([r,n])=>r+" "+n).join(", "):"";
+function matText(t:string,p?:any): string{
+  const c=matCost(p||null,t); return c?" · Materiales: "+Object.entries(c).map(([r,n])=>r+" "+n).join(", "):"";
 }
 function matTotals(p:any){
   const t:any={piedra:0,madera:0,hierro:0,comida:0};
@@ -61,6 +102,7 @@ function stepMaterials(){
     if(b.done<=tick && resOf(b)) b.stock=Math.min(PROD_CAP*(b.lvl||1),(b.stock||0)+PROD_RATE*(b.lvl||1));
     if(b.netId>=0){ const k=b.owner+":"+b.netId; let g=groups.get(k); if(!g) groups.set(k,g=[]); g.push(b); }
   }
+  stepFood();
   for(const g of groups.values()){
     const banks=g.filter(b=>b.done<=tick && b.store), builders=g.filter(b=>b.need);
     for(const pr of g){ const r=resOf(pr); if(!r||pr.done>tick||!(pr.stock>0)) continue;
