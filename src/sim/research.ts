@@ -1,7 +1,7 @@
 // ================= Investigación =================
 // Las universidades terminadas generan puntos. Se invierten en UNA investigación a la vez (p.res.cur).
 // Una investigación desbloquea un edificio (clave de BT) o un arma (clave de WEAP) listados en RESEARCH.
-function rpRate(p:any): number{ let r=0; for(const b of p.B.university) if(b.done<=tick) r+=(b.lvl||1)*RP_PER_SEC; return r; }
+function rpRate(p:any): number{ let r=0; for(const b of p.B.university) if(b.done<=tick) r+=(b.lvl||1)*RP_PER_SEC; return r*(hasIdea(p,"academia")?1.5:1); }
 function researchWhy(p:any,t:string): string|null{
   const R=RESEARCH[t]; if(!R || p.res.done[t]) return null;
   return `Primero investiga «${R.n}» en la pestaña Ciencia (necesitas Universidades).`;

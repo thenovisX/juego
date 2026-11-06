@@ -7,7 +7,7 @@ function newPlayer(name,c,isBot){
   const p={id,name,c,isBot,alive:true,troops:700*POP_X,stance:"bal",tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
     cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]])),
     aggro:0.15+rnd()*0.25, thinkAt:(rnd()*20)|0, rival:-1, focus:-1, traitorUntil:0, lastHit:-1e9,
-    res:{done:{},cur:null,prog:0}, st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};
+    res:{done:{},cur:null,prog:0}, infamy:0, pow:0, ideas:{}, hitBy:{}, evt:null, evtAt:1200+((rnd()*1800)|0), st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};
   players.push(p); tilesOf.push([]); return p;
 }
 function setOwner(i,p){
@@ -57,7 +57,7 @@ function breakPacts(a,b){
 }
 function botAnswer(bot,from,type){
   const b=players[bot], f=players[from], o=op(bot,from), s=f.troops/Math.max(1,b.troops), r=rel(bot,from);
-  const tr=f.traitorUntil>tick ? 40 : 0;
+  const tr=(f.traitorUntil>tick ? 40 : 0) + (f.infamy||0)*0.5 - (hasIdea(f,"diplomacia")?15:0);
   if(type==="nap") return o-tr > -35 && (s>0.7 || rnd()<0.45+o/200);
   if(type==="trade") return o-tr > -15 && rnd() < 0.55+o/150;
   if(type==="ally") return (r.trade || r.nap>tick) && o-tr > 20 && s>0.45 && rnd()<0.7;
@@ -135,11 +135,11 @@ function stats(p){
     if(b.eff) extra+=b.eff; }
   const max = (1000 + p.tiles*3 + cities*2000 + barr*1000) * POP_X;
   const net = stationNet(p);
-  const grow = (20 + p.tiles*0.05 + (cities+net.cities*0.5)*15 + barr*8) * POP_X * 0.6 * Math.max(0,1-p.troops/max) * (p.isBot?diff:1) * unrest(p);
+  const grow = (20 + p.tiles*0.05 + (cities+net.cities*0.5)*15 + barr*8) * POP_X * 0.6 * Math.max(0,1-p.troops/max) * (p.isBot?diff:1) * unrest(p) * (hasIdea(p,"agraria")?1.2:1);
   const tr = Math.min(5,partners(p));
   const jobs = 1 + 0.25*(mines+net.mines*0.5); // las minas dan empleo: más población que paga impuestos
   const taxInc = p.tiles*p.tax*0.01*jobs;
-  const inc = ((1 + p.tiles*0.004 + econ*4) * (1+0.12*tr) * GOLD_X + taxInc + extra) * unrest(p);
+  const inc = ((1 + p.tiles*0.004 + econ*4) * (1+0.12*tr) * GOLD_X + taxInc + extra) * unrest(p) * (hasIdea(p,"comercio")?1.12:1);
   return {max,grow,inc,cities,mines,tr,net,taxInc,extra,barr};
 }
 // Red de estaciones: las estaciones a menos de ST_LINK se unen; una red que cubre (ST_COV) al menos dos tipos de

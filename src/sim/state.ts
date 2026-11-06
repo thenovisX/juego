@@ -19,6 +19,7 @@ const CATS: any = {
   log:{n:"Logística",      e:"{{station}}", tip:"Conectan tu reino: materiales por vías, comercio por mar y por aire."},
   arm:{n:"Armamento", short:"Armas",      e:"{{missile}}", tip:"Silo para misiles y bombas, y flotas o aviones de guerra para cazar el comercio enemigo."},
   sci:{n:"Ciencia",        e:"{{science}}", tip:"Las universidades generan puntos de investigación. Cuantas más universidades, antes desbloqueas edificios y armas avanzadas."},
+  nat:{n:"Nación", short:"Nación", e:"{{crown}}", tip:"Tradiciones: gasta Autoridad (la dan tus ciudades y universidades) en bonos permanentes. Atacar a un reino sin casus belli te da infamia."},
   tro:{n:"Órdenes",        e:"{{attack}}",  tip:"Reclutar, retirar o reforzar las tropas que están en combate."},
 };
 // desc = para qué sirve (con números), where = dónde / qué necesita, r = radio de efecto, max = máximo permitido
