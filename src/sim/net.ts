@@ -131,7 +131,7 @@ function netExec(slot:number, c:any){
     case "patrol": { const w=isInt(c[1],0,1e6)?wships[c[1]]:null; if(w && w.owner===slot && isNum(c[2],0,W) && isNum(c[3],0,H)) why=setPatrol(w,c[2],c[3]); break; }
     case "prop": if(alive(c[1]) && (c[2]==="nap"||c[2]==="trade"||c[2]==="ally")){
       const to=c[1], type=c[2], r=rel(slot,to);
-      if((type==="nap"&&r.nap>tick)||(type==="trade"&&r.trade)||(type==="ally"&&r.ally)){ why="Ya tenéis ese acuerdo."; break; }
+      if((type==="nap"&&r.nap>tick)||(type==="trade"&&r.trade)||(type==="ally"&&r.ally&&r.allyEnd-tick>=600)){ why="Ya tenéis ese acuerdo."; break; }
       if(players[to].isBot){ netMuted=!mine; propose(slot,to,type); netMuted=false; }
       else {
         if(!netPend.some(q=>q.from===slot&&q.to===to&&q.type===type&&tick-q.t<600)) netPend.push({from:slot,to,type,t:tick});
