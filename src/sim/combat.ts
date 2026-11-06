@@ -48,7 +48,8 @@ function recruit(p){
   if(p.gold<cost) return `Te faltan ${fmt(cost-p.gold)} de oro.`;
   const max=stats(p).max*1.05;
   if(p.troops>=max) return "Tu población ya está al máximo: construye ciudades o cuarteles.";
-  p.gold-=cost; p.troops=Math.min(max,p.troops+RECRUIT_TROOPS*lv); ri.free.cd=tick+RECRUIT_CD; return null;
+  const mats={comida:RECRUIT_FOOD*lv,hierro:RECRUIT_IRON*lv}, why=canPayMats(p,mats); if(why) return why;
+  takeMats(p,mats); p.gold-=cost; p.troops=Math.min(max,p.troops+RECRUIT_TROOPS*lv); ri.free.cd=tick+RECRUIT_CD; return null;
 }
 // Refuerzo a un aliado: le cedes parte de tus tropas (reagrupar cuesta 1 minuto).
 function sendReinforcements(from,to,frac){

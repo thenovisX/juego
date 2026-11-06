@@ -26,6 +26,7 @@ function botThink(p){
   if(p.gold>bCost(p,"city") && p.cnt.city < 1+p.tiles/4000) tryPlace("city");
   else if(p.gold>bCost(p,"university") && p.cnt.university < Math.min(4,1+p.tiles/8000)) tryPlace("university");
   else if(p.gold>bCost(p,"sam") && (hit || p.tiles>12000) && p.cnt.sam < 1+p.tiles/30000) tryPlace("sam");
+  else if(p.gold>bCost(p,"farm") && foodMake(p)<foodUse(p)*1.2) tryPlace("farm");
   else if(p.gold>bCost(p,"mine") && p.cnt.mine < p.tiles/3000) tryPlace("mine");
   else if(p.gold>bCost(p,"sawmill") && p.cnt.sawmill<p.tiles/5000) tryPlace("sawmill");
   else if(p.gold>bCost(p,"farm") && p.cnt.farm<p.tiles/5000) tryPlace("farm");
