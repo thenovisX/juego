@@ -30,5 +30,6 @@ function upgradeBuilding(p:any,b:any): string|null{
   if(b.lvl>=MAX_LVL) return "Ya está al nivel máximo.";
   const c=upCost(b);
   if(p.gold<c) return `Te faltan ${fmt(c-p.gold)} de oro.`;
+  if(!p.isBot){ const why=canPayMats(p,upMat(b)); if(why) return why; takeMats(p,upMat(b)); }
   p.gold-=c; b.lvl++; return null;
 }
