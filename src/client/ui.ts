@@ -75,17 +75,20 @@ function handleClick(i){
 }
 function openOwnBuilding(i){
   const b=bldAt[i]>=0?buildings[bldAt[i]]:null; if(!b||b.dead||b.owner!==me.id) return;
-  const head=`${BT[b.t].e} <b>${BT[b.t].n}</b> · nivel ${b.lvl} de ${MAX_LVL}${matInfo(b)?"<br>"+matInfo(b):""}`;
+  const eff=b.eff?`<br>Aporta <b>+${fmt(b.eff)}</b> oro/s ahora mismo.`:b.t==="temple"?`<br>Sube la felicidad objetivo de todo tu reino.`:"";
+  const head=`${BT[b.t].e} <b>${BT[b.t].n}</b> · nivel ${b.lvl} de ${MAX_LVL}<br><span class="mut">${BT[b.t].desc}</span>${eff}${matInfo(b)?"<br>"+matInfo(b):""}`;
   if(b.done>tick){ showProp(isFinite(b.done)?`${head}<br>Todavía en obras.`:head,[["Cerrar",null]]); return; }
-  if(b.lvl>=MAX_LVL){ showProp(`${head}<br>Está al nivel máximo.`,[["Cerrar",null]]); return; }
+  const extra=b.t==="barracks"?[[`{{recruit}} Reclutar · ${fmt(RECRUIT_COST*b.lvl)}`,()=>{ const why=recruit(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("good"); log("{{recruit}} Nuevas tropas reclutadas.","good"); } }]]:[];
+  if(b.lvl>=MAX_LVL){ showProp(`${head}<br>Está al nivel máximo.`,extra.concat([["Cerrar",null]])); return; }
   const c=upCost(b);
   showProp(`${head}<br>Mejorar a nivel ${b.lvl+1} cuesta <b>${fmt(c)}</b> {{gold}}: ${UP_DESC[b.t]}.`,
-    [[`{{up}} Mejorar · ${fmt(c)}`,()=>{ const why=upgradeBuilding(me,b); if(why){ log(why,"bad"); sfx("err"); } else { log(`{{up}} ${BT[b.t].n} mejorada a nivel ${b.lvl}.`,"good"); sfx("build"); } }],["Cerrar",null]]);
+    [[`{{up}} Mejorar · ${fmt(c)}`,()=>{ const why=upgradeBuilding(me,b); if(why){ log(why,"bad"); sfx("err"); } else { log(`{{up}} ${BT[b.t].n} mejorada a nivel ${b.lvl}.`,"good"); sfx("build"); } }]].concat(extra,[["Cerrar",null]]));
 }
 function attackAt(i){
   const def=owner[i], troops=Math.floor(me.troops*ratio);
   if(troops<1){ log("No tienes tropas suficientes.","bad"); return; }
   const cands=borderCandidates(me.id,def);
+  if(immune(def)){ log(`${players[def].name} acaba de fundarse y es inmune a ataques unos segundos.`,"bad"); sfx("err"); return; }
   if(cands.length){ launchAttack(me.id,def,troops,cands); sfx("march"); if(def>=0) log(`{{attack}} Atacas a ${players[def].name} con ${fmt(troops)} tropas.`); stepAttacks(); return; }
   const why=sendBoat(me,i,troops);
   if(why){ log(def<0?`No tienes frontera con esa tierra. ${why}`:`No tienes frontera con ${players[def].name}. ${why}`,"bad"); sfx("err"); }
@@ -99,25 +102,51 @@ function updateRatioN(){ document.getElementById("ratioN").textContent=me?fmt(Ma
 document.querySelectorAll("#send .presets .btn").forEach(b=>b.onclick=()=>{ ratioEl.value=b.dataset.r; ratioEl.oninput(); });
 ratioEl.oninput();
 const taxEl=document.getElementById("tax");
-taxEl.oninput=()=>{ if(me) me.tax=+taxEl.value; document.getElementById("taxV").textContent=taxEl.value+"%"; };
+taxEl.oninput=()=>{ if(me) setTax(me,+taxEl.value); document.getElementById("taxV").textContent=taxEl.value+"%"; };
 taxEl.addEventListener("pointerup",()=>taxEl.blur()); taxEl.addEventListener("change",()=>taxEl.blur());
-const weapEl=document.getElementById("weap");
-const TAB_OF={city:"eco",mine:"eco",foundry:"eco",port:"eco",airport:"eco",sawmill:"eco",farm:"eco",bank:"eco",station:"eco",fort:"def",sam:"def",silo:"def"};
-const pageEl=k=>document.querySelector(`#dock [data-page="${k}"]`);
-function showTab(k){ document.querySelectorAll("#dock .tab").forEach(t=>{ const on=t.dataset.tab===k; t.classList.toggle("on",on); t.setAttribute("aria-selected",on); }); document.querySelectorAll("#dock .page").forEach(p=>p.hidden=p.dataset.page!==k); }
-document.querySelectorAll("#dock .tab").forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
-function mkCard(parent,id,e,label,key,title,onclick,cls){ const b=document.createElement("button"); b.type="button"; b.className="btn card"+(cls?" "+cls:""); b.id=id; b.title=title;
-  b.innerHTML=`<kbd>${key}</kbd><span class="em">${e}</span><span class="lb">${label}</span><span class="co" id="${id}_c"></span>`; b.onclick=onclick; parent.appendChild(b); }
-for(const t in BT) mkCard(pageEl(TAB_OF[t]||"eco"),"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+matText(t),()=>toggleMode({k:"build",t}));
-for(const t in WEAP) mkCard(weapEl,"w_"+t,WEAP[t].e,WEAP[t].n,WEAP[t].key,WEAP[t].desc,()=>toggleMode({k:"weap",t}),"weap");
-mkCard(weapEl,"w_ship","{{wship}}","Buque","B","Buque de guerra: patrulla desde tu puerto, intercepta cargueros enemigos y se queda su oro",()=>{ const why=buyWarship(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); selShip=wships.filter(w=>w.owner===me.id).pop(); setMode({k:"patrol"}); log("{{wship}} Buque de guerra botado. Toca el punto del mar donde quieres que patrulle: se quedará por esa zona y cañoneará a los cargueros enemigos que entren."); } },"weap");
-mkCard(weapEl,"w_patrol","{{wship}}","Zona de patrulla","Z","Elige un buque de guerra (tócalo) y luego el punto del mar donde debe quedarse patrullando",()=>toggleMode({k:"patrol"}),"weap");
-mkCard(weapEl,"w_plane","{{wplane}}","Avión de guerra","V","Avión de guerra: patrulla desde tu aeropuerto y derriba aviones comerciales enemigos",()=>{ const why=buyWarplane(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); log("{{wplane}} Avión de guerra listo para patrullar."); } },"weap");
+const panesEl=document.getElementById("panes"), tabsEl=document.getElementById("dtabs"), infoEl=document.getElementById("dinfo");
+let curCat="eco";
+const paneOf={};
+for(const c in CATS){ const pane=document.createElement("div"); pane.className="grp"; pane.id="pane_"+c; pane.hidden=c!==curCat; panesEl.appendChild(pane); paneOf[c]=pane;
+  const tb=document.createElement("button"); tb.type="button"; tb.className="tab"+(c===curCat?" on":""); tb.id="tab_"+c; tb.setAttribute("role","tab"); tb.innerHTML=`${CATS[c].e} ${CATS[c].short||CATS[c].n}`; tb.onclick=()=>setCat(c); tabsEl.appendChild(tb); }
+function setCat(c){ curCat=c; for(const k in CATS){ paneOf[k].hidden=k!==c; document.getElementById("tab_"+k).classList.toggle("on",k===c); } showInfo(null); }
+let infoFn=null;
+function showInfo(fn){ infoFn=fn; refreshInfo(); }
+function refreshInfo(){ infoEl.innerHTML=infoFn?infoFn():`<span><b>${CATS[curCat].e} ${CATS[curCat].n}.</b> <span class="mut">${CATS[curCat].tip}</span></span>`; }
+function mkCard(parent,id,e,label,key,title,onclick,cls,info){ const b=document.createElement("button"); b.type="button"; b.className="btn card"+(cls?" "+cls:""); b.id=id; b.title=title;
+  b.innerHTML=`<kbd>${key}</kbd><span class="em">${e}</span><span class="lb">${label}</span><span class="co" id="${id}_c"></span>`;
+  b.onclick=()=>{ onclick(); if(info) showInfo(info); }; if(info){ b.onmouseenter=()=>showInfo(info); b.onfocus=()=>showInfo(info); b.onmouseleave=()=>showInfo(null); }
+  parent.appendChild(b); }
+const infoBT=t=>()=>{ const d=BT[t]; return `<span><b>${d.e} ${d.n}</b> · <span class="co">${fmt(bCost(me,t))} {{gold}}</span> — ${d.desc} <span class="mut">${d.where}${matText(t)}${d.max?"":""}</span></span>`; };
+const infoW=t=>()=>{ const d=WEAP[t]; return `<span><b>${d.e} ${d.n}</b> · ${fmt(d.cost)} {{gold}} — ${d.desc} <span class="mut">Necesita un Silo terminado. Elige el objetivo en el mapa (radio ${d.r}).</span></span>`; };
+const infoText=(e,n,txt,extra)=>()=>`<span><b>${e} ${n}</b> — ${txt} <span class="mut">${extra||""}</span></span>`;
+for(const t in BT) mkCard(paneOf[BT[t].cat],"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+" "+BT[t].where+matText(t),()=>{ setCat(BT[t].cat); toggleMode({k:"build",t}); },"",infoBT(t));
+for(const t in WEAP) mkCard(paneOf.arm,"w_"+t,WEAP[t].e,WEAP[t].n,WEAP[t].key,WEAP[t].desc,()=>toggleMode({k:"weap",t}),"weap",infoW(t));
+mkCard(paneOf.arm,"w_ship","{{wship}}","Buque","B","Buque de guerra: patrulla desde tu puerto, intercepta cargueros enemigos y se queda su oro",()=>{ const why=buyWarship(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); selShip=wships.filter(w=>w.owner===me.id).pop(); setMode({k:"patrol"}); log("{{wship}} Buque de guerra botado. Toca el punto del mar donde quieres que patrulle: se quedará por esa zona y cañoneará a los cargueros enemigos que entren."); } },"weap",
+  infoText("{{wship}}","Buque de guerra","patrulla una zona del mar y se queda con la carga de los cargueros ajenos (salvo socios y aliados).","Necesita un Puerto terminado."));
+mkCard(paneOf.arm,"w_patrol","{{wship}}","Zona de patrulla","Z","Elige un buque de guerra (tócalo) y luego el punto del mar donde debe quedarse patrullando",()=>toggleMode({k:"patrol"}),"weap",
+  infoText("{{wship}}","Zona de patrulla","toca un buque tuyo y luego el punto del mar donde debe quedarse vigilando."));
+mkCard(paneOf.arm,"w_plane","{{wplane}}","Avión de guerra","V","Avión de guerra: patrulla desde tu aeropuerto y derriba aviones comerciales enemigos",()=>{ const why=buyWarplane(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); log("{{wplane}} Avión de guerra listo para patrullar."); } },"weap",
+  infoText("{{wplane}}","Avión de guerra","patrulla desde tu aeropuerto y derriba los aviones comerciales de reinos sin pacto contigo.","Necesita un Aeropuerto terminado."));
+refreshInfo();
+// ---- Órdenes de tropas
+const infoRecruit=()=>{ const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1; return `<span><b>{{recruit}} Reclutar</b> · <span class="co">${fmt(RECRUIT_COST*lv)} {{gold}}</span> — consigues <b>${fmt(RECRUIT_TROOPS*lv)}</b> tropas al instante. <span class="mut">Necesita un Cuartel terminado; cada cuartel descansa 25 s. Un cuartel de más nivel recluta más.</span></span>`; };
+mkCard(paneOf.tro,"t_recruit","{{recruit}}","Reclutar","u","Gasta oro y consigue tropas al instante (necesita Cuartel)",()=>{ const why=recruit(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("good"); log("{{recruit}} Nuevas tropas reclutadas.","good"); } },"tro",infoRecruit);
+mkCard(paneOf.tro,"t_recall","{{retreat}}","Retirar","n","Retira las tropas de todos los frentes abiertos a tu reserva",()=>recallAll(),"tro",
+  infoText("{{retreat}}","Retirar todo","las tropas que aún no han combatido en tus frentes vuelven a la reserva.","Para retirar un solo frente usa ↩ en el panel de frentes (arriba a la izquierda)."));
+mkCard(paneOf.tro,"t_reinf","{{reinforce}}","Reforzar","y","Manda un 25% más de tu reserva a todos los frentes abiertos",()=>reinforceAll(),"tro",
+  infoText("{{reinforce}}","Reforzar frentes","envía un 25% de tu reserva a cada frente abierto para romper una defensa dura.","También puedes mandar refuerzos a un aliado desde Diplomacia."));
+// ---- Posturas (junto al deslizador de tropas)
+const stEl=document.getElementById("stances");
+for(const s in STANCE){ const b=document.createElement("button"); b.type="button"; b.className="btn"; b.id="st_"+s; b.title=STANCE[s].desc+" ("+STANCE[s].key.toUpperCase()+")"; b.innerHTML=`${STANCE[s].e} ${STANCE[s].n}`; b.onclick=()=>pickStance(s); stEl.appendChild(b); }
+function pickStance(s){ if(!me) return; setStance(me,s); sfx("march"); updateStance(); }
+function updateStance(){ if(!me) return; const cur=me.stance||"bal"; for(const s in STANCE) document.getElementById("st_"+s).classList.toggle("on",s===cur); document.getElementById("stanceInfo").textContent=STANCE[cur].desc; }
+function recallAll(){ let n=0; for(const a of attacks.slice()) if(a.att===me.id) n+=recallAttack(me,a.def); if(n>0){ sfx("good"); log(`{{retreat}} ${fmt(n)} tropas vuelven a la reserva.`,"good"); } else { log("No tienes frentes abiertos.","bad"); sfx("err"); } }
+function reinforceAll(){ let n=0, c=0; for(const a of attacks.slice()) if(a.att===me.id){ n+=reinforceAttack(me,a.def,0.25); c++; } if(n>0){ sfx("march"); log(`{{reinforce}} ${fmt(n)} tropas de refuerzo enviadas a ${c} frente${c>1?"s":""}.`); } else { log(c?"No te quedan tropas en reserva.":"No tienes frentes abiertos.","bad"); sfx("err"); } }
 document.getElementById("dipBtn").onclick=()=>toggleMode({k:"dip"});
 const sameMode=(a,b)=>!!a&&!!b&&a.k===b.k&&a.t===b.t;
 function toggleMode(m){ setMode(sameMode(mode,m)?null:m); }
-function setMode(m){ mode=m;
-  if(m){ const k=m.k==="build"?(TAB_OF[m.t]||"eco"):m.k==="dip"?"dip":"weap"; showTab(k); }
+function setMode(m){ mode=m; if(m&&m.k==="build"&&BT[m.t].cat!==curCat) setCat(BT[m.t].cat); else if(m&&m.k==="weap"&&curCat!=="arm") setCat("arm");
   for(const t in BT) document.getElementById("b_"+t).classList.toggle("on",sameMode(m,{k:"build",t}));
   for(const t in WEAP) document.getElementById("w_"+t).classList.toggle("on",sameMode(m,{k:"weap",t}));
   document.getElementById("dipBtn").classList.toggle("on",!!m&&m.k==="dip"); document.getElementById("w_patrol").classList.toggle("on",!!m&&m.k==="patrol");
@@ -137,6 +166,10 @@ addEventListener("keydown",e=>{ if(e.key in PAN && e.target.tagName!=="SELECT" &
   if(e.target.tagName==="INPUT"||e.target.tagName==="SELECT"||!started) return; shiftHeld=e.shiftKey;
   for(const t in BT) if(e.key===BT[t].key) toggleMode({k:"build",t});
   for(const t in WEAP) if(e.key===WEAP[t].key) toggleMode({k:"weap",t});
+  for(const t in STANCE) if(e.key===STANCE[t].key) pickStance(t);
+  if(e.key==="u") document.getElementById("t_recruit").click();
+  if(e.key==="n") recallAll();
+  if(e.key==="y") reinforceAll();
   if(e.key==="d"||e.key==="D") toggleMode({k:"dip"});
   if(e.key==="b"||e.key==="B") document.getElementById("w_ship").click();
   if(e.key==="z"||e.key==="Z") toggleMode({k:"patrol"});
@@ -192,7 +225,7 @@ function renderDip(){
   else if(r.nap>tick) chips.push(`<span class="chip g">{{nap}} No agresión · ${Math.ceil((r.nap-tick)/10)} s</span>`);
   if(r.trade) chips.push(`<span class="chip g">{{trade}} Comercio</span>`);
   if(attacks.some(a=>a.att===dipFor&&a.def===me.id)) chips.push(`<span class="chip r">{{attack}} Te está atacando</span>`);
-  if(p.traitorUntil>tick) chips.push(`<span class="chip r">{{traitor}} Traidor</span>`);
+  if(p.traitorUntil>tick) chips.push(`<span class="chip r">{{traitor}} Traidor${p.betrayals>1?" x"+p.betrayals:""}</span>`);
   const pct=Math.round(ratio*100), siloOk=me.B.silo.some(b=>b.done<=tick), mil=[], trd=[];
   mil.push(`<button class="btn" type="button" data-a="attack">{{attack}} Atacar <small>${pct}% · ${fmt(me.troops*ratio)}</small></button>`);
   mil.push(`<button class="btn" type="button" data-a="boat" ${me.B.port.some(b=>b.done<=tick)?"":"disabled"}>{{boat}} Enviar barco <small>${pct}% · desembarco</small></button>`);
@@ -205,8 +238,9 @@ function renderDip(){
   const acts=[];
   if(!r.ally && r.nap<=tick) acts.push(`<button class="btn" type="button" data-a="nap">{{nap}} Pacto de no agresión <small>5 min</small></button>`);
   if(!r.trade) acts.push(`<button class="btn" type="button" data-a="trade">{{trade}} Acuerdo comercial <small>+12% oro</small></button>`);
-  if(!r.ally) acts.push(`<button class="btn" type="button" data-a="ally">{{ally}} Proponer alianza <small>permanente</small></button>`);
+  if(!r.ally||r.allyEnd-tick<600) acts.push(`<button class="btn" type="button" data-a="ally">{{ally}} ${r.ally?"Renovar alianza":"Proponer alianza"} <small>10 min</small></button>`);
   acts.push(`<button class="btn" type="button" data-a="gift" ${me.gold<300*GOLD_X?"disabled":""}>{{gift}} Regalar ${fmt(300*GOLD_X)} de oro <small>mejora la relación</small></button>`);
+  if(r.ally) acts.push(`<button class="btn" type="button" data-a="reinf" title="Cedes un 20% de tu reserva a tu aliado">{{reinforce}} Enviar refuerzos <small>20% · ${fmt(me.troops*0.2)}</small></button>`);
   if(r.ally) acts.push(`<button class="btn" type="button" data-a="help">🆘 Pedir ayuda <small>ataca a tu enemigo</small></button>`);
   if(r.ally||r.nap>tick||r.trade) acts.push(`<button class="btn" type="button" data-a="break">{{break}} Romper acuerdos</button>`);
   acts.push(`<button class="btn" type="button" data-a="go">{{pin}} Ver en el mapa</button>`);
@@ -247,6 +281,7 @@ function dipAction(a){
   else if(a==="help"){ const at=attacks.find(x=>x.def===me.id), enemy=at?at.att:me.rival;
     if(enemy>=0 && enemy!==o && players[enemy].alive){ players[o].focus=enemy; log(`🆘 ${players[o].name} atacará a ${players[enemy].name}.`,"good"); }
     else log("Ahora mismo nadie te está atacando.","bad"); }
+  else if(a==="reinf"){ const r=sendReinforcements(me.id,o,0.2); if(typeof r==="string"){ log(r,"bad"); sfx("err"); } else { sfx("march"); log(`{{reinforce}} ${fmt(r)} tropas enviadas como refuerzo a ${players[o].name}.`,"good"); } }
   else if(a==="break") breakPacts(me.id,o);
   else if(a==="go"){ const p=players[o]; centerOn(p.sumX/p.tiles,p.sumY/p.tiles,Math.max(cam.z,3)); }
   renderDip();
@@ -273,8 +308,14 @@ function updateHud(){
   for(const t in WEAP){ document.getElementById("w_"+t+"_c").textContent=fmt(WEAP[t].cost); const el=document.getElementById("w_"+t); el.disabled=!silo||me.gold<WEAP[t].cost||!me.alive; el.title=silo?WEAP[t].desc:"Construye un {{silo}} Silo para desbloquear"; }
   { const ok=me.B.port.some(b=>b.done<=tick); document.getElementById("w_ship_c").textContent=fmt(WSHIP_COST); document.getElementById("w_ship").disabled=!ok||me.gold<WSHIP_COST||!me.alive; }
   { const ok=readyAirports(me).length>0; document.getElementById("w_plane_c").textContent=fmt(WPLANE_COST); document.getElementById("w_plane").disabled=!ok||me.gold<WPLANE_COST||!me.alive; }
+  { const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1, mine=attacks.some(a=>a.att===me.id);
+    document.getElementById("t_recruit_c").textContent=ri.ready?(ri.free?fmt(RECRUIT_COST*lv):"descansa"):"sin cuartel";
+    document.getElementById("t_recruit").disabled=!ri.free||me.gold<RECRUIT_COST*lv||!me.alive;
+    document.getElementById("t_recall_c").textContent=mine?"frentes":"—"; document.getElementById("t_recall").disabled=!mine||!me.alive;
+    document.getElementById("t_reinf_c").textContent=mine?"+25%":"—"; document.getElementById("t_reinf").disabled=!mine||!me.alive; }
+  updateStance(); if(infoFn) refreshInfo();
   const rows=[];
-  for(const a of attacks){ if(a.att===me.id) rows.push(`<div><span>{{attack}} ${a.def<0?"Tierra libre":esc(players[a.def].name)}</span><span class="num">${fmt(a.troops)}</span></div>`);
+  for(const a of attacks){ if(a.att===me.id) rows.push(`<div class="fr"><span>{{attack}} ${a.def<0?"Tierra libre":esc(players[a.def].name)}</span><span class="num">${fmt(a.troops)}</span><button type="button" data-recall="${a.def}" title="Retirar estas tropas a la reserva">↩</button><button type="button" data-reinf="${a.def}" title="Mandar un 25% más de tu reserva">➕</button></div>`);
     else if(a.def===me.id) rows.push(`<div class="in"><span>{{shield}} ${esc(players[a.att].name)} te ataca</span><span class="num">${fmt(a.troops)}</span></div>`); }
   for(const b of boats){ if(b.owner===me.id) rows.push(`<div><span>{{boat}} Flota</span><span class="num">${fmt(b.troops)}</span></div>`); else if(owner[b.ti]===me.id) rows.push(`<div class="in"><span>{{boat}} ${esc(players[b.owner].name)}</span><span class="num">${fmt(b.troops)}</span></div>`); }
   for(const m of missiles){ if(owner[m.ti]===me.id && m.owner!==me.id) rows.push(`<div class="in"><span>{{alarm}} ${WEAP[m.type].e} ${esc(players[m.owner].name)}</span><span class="num">${Math.ceil((m.dur-m.t)/10)} s</span></div>`);
@@ -285,18 +326,25 @@ function updateHud(){
   document.getElementById("boardList").innerHTML=list.map(p=>`<li class="${p===me?"me":""}" data-id="${p.id}"><span class="sw" style="background:rgb(${p.c})"></span><span class="nm">${alive.indexOf(p)+1}. ${esc(p.name)} ${p===me?"":relLabel(me.id,p.id).join("")}</span><span class="num">${(p.tiles/landTotal*100).toFixed(1)}%</span></li>`).join("");
   if(!dipEl.hidden) renderDip();
 }
+document.getElementById("wars").addEventListener("pointerdown",e=>{ const b=e.target.closest("button"); if(!b||!me) return; e.preventDefault();
+  if(b.dataset.recall!==undefined){ const n=recallAttack(me,+b.dataset.recall); if(n>0){ sfx("good"); log(`{{retreat}} ${fmt(n)} tropas vuelven a la reserva.`,"good"); } }
+  else if(b.dataset.reinf!==undefined){ const n=reinforceAttack(me,+b.dataset.reinf,0.25); if(n>0){ sfx("march"); log(`{{reinforce}} ${fmt(n)} tropas de refuerzo enviadas al frente.`); } else { log("No te quedan tropas en reserva.","bad"); sfx("err"); } }
+  updateHud(); });
 document.getElementById("boardList").addEventListener("click",e=>{ const li=e.target.closest("li"); if(!li) return; const id=+li.dataset.id; if(id!==me.id) openDip(id); });
 
 function showHelp(){
   const ov=document.getElementById("overlay"), box=document.getElementById("obox"), wasPaused=paused; paused=true;
   box.innerHTML=`<h1 style="font-size:32px">Cómo se juega</h1><div class="help">
-  <p><b>Expandirte:</b> toca tierra libre. Envías el % de tropas del deslizador (teclas Q / E).</p>
+  <p><b>Expandirte:</b> toca tierra libre. Envías el % de tropas del deslizador (Q / E). Las tropas son tu <b>población</b>: crece sola hasta un máximo que suben las ciudades y los cuarteles.</p>
   <p><b>Atacar:</b> toca un reino vecino. Montañas, bosques y fortalezas lo ponen más difícil. Sin frontera necesitas un {{port}} Puerto.</p>
-  <p><b>Construir:</b> elige un edificio abajo (1–7) y toca tu territorio. Mantén Mayús para construir varios. Flechas: mover el mapa.</p>
+  <p><b>Posturas</b> (J / K / L): {{stance_agg}} ofensiva avanza más rápido pero pierde más tropas y te deja más expuesto; {{stance_def}} defensiva avanza más lento pero eres más difícil de conquistar.</p>
+  <p><b>Frentes:</b> en el panel de arriba a la izquierda cada ataque tiene ↩ para retirar sus tropas y ➕ para reforzarlo. En la pestaña <b>Órdenes</b> puedes hacerlo con todos a la vez y {{recruit}} <b>reclutar</b> tropas por oro (necesita {{barracks}} Cuartel).</p>
+  <p><b>Construir:</b> la barra de abajo tiene pestañas. Pasa el ratón (o toca) cada edificio para leer para qué sirve, cuánto cuesta y dónde se puede poner. Mantén Mayús para construir varios. Clic en un edificio tuyo para mejorarlo.</p>
+  <p><b>{{gold}} Ganar oro:</b> la base son los <b>impuestos</b> (deslizador). Encima: {{sawmill}} aserraderos, {{farm}} granjas y {{foundry}} metalúrgicas; {{market}} <b>mercados</b> junto a ciudades; {{mint}} <b>casas de la moneda</b> junto a minas; {{tradehouse}} <b>casas de comercio</b> por cada socio comercial. El oro NO depende de cuánta población tengas.</p>
+  <p><b>Felicidad:</b> más impuestos = pueblo descontento. Los {{temple}} templos la suben para que puedas cobrar más sin revueltas.</p>
   <p><b>Bombardear:</b> con un {{silo}} Silo terminado se desbloquean misil, atómica y bomba H (8, 9, 0). Las {{sam}} Antiaéreas las derriban.</p>
-  <p><b>Clic derecho</b> (o pulsación larga) sobre un reino: atacar, enviar barco, lanzar misil/bomba, pactos y comercio.</p>
-  <p><b>Comercio:</b> con acuerdo comercial y {{port}} puertos en ambos reinos puedes enviar {{cargo}} cargueros que dan oro. Las {{station}} Estaciones (a menos de 40 una de otra) conectan minas, ciudades y puertos cercanos (radio 14): +50% de producción y exportación; se ven como líneas azules.</p>
-  <p><b>Diplomacia:</b> botón {{ally}} (D). Los pactos impiden atacaros; romperlos te marca como traidor.</p>
+  <p><b>Clic derecho</b> (o pulsación larga) sobre un reino: atacar, enviar barco, lanzar misil/bomba, pactos, comercio y refuerzos a aliados.</p>
+  <p><b>Comercio:</b> con acuerdo comercial y {{port}} puertos puedes enviar {{cargo}} cargueros que dan oro. Las {{station}} Estaciones (a menos de 40 una de otra) conectan minas, ciudades y puertos cercanos (radio 14): +50% de producción y exportación.</p>
   <p><b>Moverte:</b> arrastra el mapa, rueda o pellizco para zoom, minimapa para saltar. Espacio pausa.</p></div>
   <button class="go" type="button" id="helpOk">Volver al juego</button>`;
   ov.hidden=false; document.getElementById("helpOk").onclick=()=>{ ov.hidden=true; paused=wasPaused; };
@@ -306,8 +354,8 @@ function endGame(win){
   const ov=document.getElementById("overlay"), box=document.getElementById("obox");
   const secs=Math.floor((tick-me.st.born)/10), mm=Math.floor(secs/60), ss=String(secs%60).padStart(2,"0");
   const alive=players.filter(p=>p.alive).length, killer=me.st.killer>=0?players[me.st.killer].name:null;
-  box.innerHTML=`<h1 class="${win?"":"lose"}">${win?"{{crown}} Hegemonía":"Tu reino ha caído"}</h1>
-    <p class="sub">${win?`Controlas el ${(me.tiles/landTotal*100).toFixed(0)}% del mundo. Ningún reino puede hacerte frente.`:killer?`<b>${esc(killer)}</b> conquistó tus últimas tierras.`:"Tus últimas tierras se perdieron."}</p>
+  box.innerHTML=`<h1 class="${win?"":"lose"}">${win?"{{crown}} Hegemonía":netWinner>=0?"Partida terminada":"Tu reino ha caído"}</h1>
+    <p class="sub">${win?`Controlas el ${(me.tiles/landTotal*100).toFixed(0)}% del mundo. Ningún reino puede hacerte frente.`:netWinner>=0?`<b>${esc(players[netWinner].name)}</b> controla el ${(players[netWinner].tiles/landTotal*100).toFixed(0)}% del mundo y gana la partida.`:killer?`<b>${esc(killer)}</b> conquistó tus últimas tierras.`:"Tus últimas tierras se perdieron."}</p>
     <div class="stats">
       <div><span>{{time}} Tiempo</span><b>${mm}:${ss}</b></div>
       <div><span>{{medal}} Puesto final</span><b>${win?1:alive+1}º de ${players.length}</b></div>
@@ -317,7 +365,7 @@ function endGame(win){
       <div><span>{{silo}} Bombas lanzadas</span><b>${me.st.bombs}</b></div>
     </div>
     <button class="go" type="button" id="againBtn">Jugar otra vez</button>
-    ${win?"":`<button class="btn go2" type="button" id="specBtn">{{eye}} Seguir viendo la partida</button>`}`;
+    ${win||netWinner>=0?"":`<button class="btn go2" type="button" id="specBtn">{{eye}} Seguir viendo la partida</button>`}`;
   ov.hidden=false;
   document.getElementById("againBtn").onclick=()=>location.reload();
   const sb=document.getElementById("specBtn"); if(sb) sb.onclick=()=>{ spectating=true; ov.hidden=true; };

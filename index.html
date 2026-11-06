@@ -24,7 +24,7 @@
     <input id="tax" type="range" min="0" max="80" step="5" value="10" aria-label="Tasa de impuestos">
     <div class="hap" title="Felicidad del pueblo: con menos de 50 baja la economía; con menos de 25 hay revueltas"><span id="hapE">{{f2}}</span><div class="meter"><div id="hapM"></div></div><b id="hapV" class="num">80</b></div></div>
   <div id="mats" class="mats" title="Materiales almacenados en minas, aserraderos, granjas y bancos"></div>
-  <div id="wars"></div>
+  <div id="wars" title="Frentes abiertos: ↩ retira las tropas, ➕ manda un 25% más de tu reserva"></div>
 </div>
 
 <div id="board" class="panel" hidden><h2><span>{{board}} Potencias</span><span class="num" id="aliveN"></span></h2><ol id="boardList"></ol></div>
@@ -34,21 +34,17 @@
   <input id="ratio" type="range" min="5" max="100" step="5" value="30" aria-label="Porcentaje de tropas a enviar">
   <div class="presets"><button type="button" class="btn" data-r="10">10%</button><button type="button" class="btn" data-r="25">25%</button><button type="button" class="btn" data-r="50">50%</button><button type="button" class="btn" data-r="75">75%</button><button type="button" class="btn" data-r="100">Todas</button></div>
   <div class="sn">≈ <b id="ratioN" class="num">0</b> tropas por ataque <kbd>Q</kbd><kbd>E</kbd></div>
+  <div class="sh"><span>Postura de combate</span></div>
+  <div class="presets" id="stances"></div>
+  <div class="sn" id="stanceInfo"></div>
 </div>
 
 <div id="dock" class="panel" hidden>
-  <div class="tabs" role="tablist" aria-label="Categorías">
-    <button class="tab on" type="button" role="tab" data-tab="eco">{{city}} Economía</button>
-    <button class="tab" type="button" role="tab" data-tab="def">{{fort}} Defensa</button>
-    <button class="tab" type="button" role="tab" data-tab="weap">{{missile}} Armamento</button>
-    <button class="tab" type="button" role="tab" data-tab="dip">{{ally}} Diplomacia</button>
-    <span class="tabhint">Elige y toca tu territorio · <kbd>Mayús</kbd> varios</span>
-  </div>
-  <div class="pages">
-    <div class="grp page" id="pg_eco" data-page="eco" role="tabpanel"></div>
-    <div class="grp page" id="pg_def" data-page="def" role="tabpanel" hidden></div>
-    <div class="grp page" id="weap" data-page="weap" role="tabpanel" hidden></div>
-    <div class="grp page" id="pg_dip" data-page="dip" role="tabpanel" hidden><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button><p class="dipnote">Toca un reino en el mapa o en la lista de potencias para ofrecer pactos, comercio y regalos.</p></div>
+  <div class="dhead"><div id="dtabs" role="tablist"></div><div id="dinfo" aria-live="polite"></div></div>
+  <div class="dbody">
+    <div id="panes"></div>
+    <div class="sep"></div>
+    <div class="grp-w"><div class="gl">Diplomacia</div><div class="grp"><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button></div></div>
   </div>
 </div>
 

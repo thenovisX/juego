@@ -47,7 +47,7 @@ function buyWarplane(p:any): string|null{
   if(!ports.length) return "Necesitas un aeropuerto terminado.";
   if(wplanes.filter(w=>w.owner===p.id).length>=WPLANE_MAX) return `Máximo ${WPLANE_MAX} aviones de guerra.`;
   if(p.gold<WPLANE_COST) return `Te faltan ${fmt(WPLANE_COST-p.gold)} de oro.`;
-  const ap=ports[(Math.random()*ports.length)|0], x=ap.x+0.5, y=ap.y+0.5;
+  const ap=ports[(rnd()*ports.length)|0], x=ap.x+0.5, y=ap.y+0.5;
   p.gold-=WPLANE_COST; wplanes.push({owner:p.id,x,y,hx:x,hy:y,target:null,trail:[[x,y]]});
   return null;
 }
