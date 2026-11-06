@@ -6,8 +6,9 @@ function fortMult(d,i){
 }
 function tileCost(att,def,i){
   const t=TER[terrain[i]]; let c;
-  if(def<0) c=t.cost*0.7;
-  else { const d=players[def], dens=d.troops/Math.max(1,d.tiles); c=t.cost*(1.5+dens*0.9)*t.def*fortMult(def,i)*(wall[i]?4:1); }
+  if(def<0) c=t.cost*0.7*POP_X;
+  else { const d=players[def], dens=d.troops/Math.max(1,d.tiles); c=t.cost*(1.5*POP_X+dens*0.9)*t.def*fortMult(def,i)*(wall[i]?4:1)*STANCE[d.stance||"bal"].def; }
+  c*=STANCE[players[att].stance||"bal"].cost;
   if(fallout[i]>tick) c*=2.5;
   return c;
 }
@@ -17,6 +18,44 @@ function borderCandidates(att,def){
   return out;
 }
 function seedCandidates(def,i){ const out=[]; nbs(i,NB); for(const j of NB) if(j>=0 && terrain[j] && owner[j]===def) out.push(j); return out; }
+// ---- Órdenes a las tropas en combate
+// Retirar: las tropas que aún no han combatido vuelven a la reserva.
+function recallAttack(p,def){
+  const a=attacks.find(x=>x.att===p.id && x.def===def); if(!a) return 0;
+  const t=a.troops; refundAttack(a); attacks=attacks.filter(x=>x.troops>0); return t;
+}
+// Reforzar: manda otra parte de la reserva a un frente abierto.
+function reinforceAttack(p,def,frac){
+  const a=attacks.find(x=>x.att===p.id && x.def===def); if(!a) return 0;
+  const t=Math.floor(p.troops*frac); if(t<1) return 0; p.troops-=t; a.troops+=t; return t;
+}
+function setStance(p,s){ if(STANCE[s]) p.stance=s; }
+// Reclutar: un cuartel terminado y descansado convierte oro en tropas al instante.
+function recruitInfo(p){
+  const ready=p.B.barracks.filter(b=>b.done<=tick), best=ready.reduce((m,b)=>!m||(b.lvl||1)>(m.lvl||1)?b:m,null);
+  const free=ready.filter(b=>b.cd<=tick).reduce((m,b)=>!m||(b.lvl||1)>(m.lvl||1)?b:m,null);
+  return {ready:ready.length, best, free};
+}
+function recruit(p){
+  const ri=recruitInfo(p);
+  if(!ri.ready) return "Necesitas un Cuartel terminado.";
+  if(!ri.free) return "Tus cuarteles están descansando (25 s entre reclutamientos).";
+  const lv=ri.free.lvl||1, cost=RECRUIT_COST*lv;
+  if(p.gold<cost) return `Te faltan ${fmt(cost-p.gold)} de oro.`;
+  const max=stats(p).max*1.05;
+  if(p.troops>=max) return "Tu población ya está al máximo: construye ciudades o cuarteles.";
+  p.gold-=cost; p.troops=Math.min(max,p.troops+RECRUIT_TROOPS*lv); ri.free.cd=tick+RECRUIT_CD; return null;
+}
+// Refuerzo a un aliado: le cedes parte de tus tropas (reagrupar cuesta 1 minuto).
+function sendReinforcements(from,to,frac){
+  const r=peek(from,to); if(!r||!r.ally) return "Solo puedes mandar refuerzos a un aliado.";
+  const F=players[from], T=players[to];
+  if(tick<(F.reinfAt||0)) return `Tus tropas aún se reagrupan (${Math.ceil((F.reinfAt-tick)/10)} s).`;
+  const t=Math.floor(F.troops*frac); if(t<1) return "No tienes tropas suficientes.";
+  const room=Math.max(0,stats(T).max*1.05-T.troops); const give=Math.min(t,room);
+  if(give<1) return "Tu aliado ya tiene la población al máximo.";
+  F.troops-=give; T.troops+=give; F.reinfAt=tick+REINF_CD; addOp(to,from,6); return give;
+}
 function launchAttack(att,def,troops,cands){
   if(!cands.length || troops<1 || peaceful(att,def)) return false;
   players[att].troops-=troops;
@@ -30,7 +69,8 @@ function launchAttack(att,def,troops,cands){
 function stepAttacks(){
   for(const a of attacks){
     const A=players[a.att];
-    let n=Math.min(a.q.length, Math.max(8, Math.floor(a.troops/15)), 500), stale=0;
+    let n=Math.min(a.q.length, Math.max(3, Math.floor(a.troops/(POP_X*20))), 220), stale=0;
+    n=Math.max(1,Math.round(n*STANCE[A.stance||"bal"].att));
     while(n-- > 0 && a.q.length){
       const k=(Math.random()*a.q.length)|0, t=a.q[k]; a.q[k]=a.q[a.q.length-1]; a.q.pop();
       if(owner[t]!==a.def){ if(++stale<3000) n++; continue; }

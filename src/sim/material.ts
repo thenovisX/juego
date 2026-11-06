@@ -9,6 +9,7 @@ const RES_E:any={piedra:"{{piedra}}",madera:"{{madera}}",hierro:"{{hierro}}",com
 const MAT_COST:any={
   port:{piedra:50,madera:30}, city:{hierro:100,piedra:50,comida:40}, silo:{hierro:200}, sam:{hierro:100,piedra:50},
   airport:{hierro:60,madera:40}, bank:{piedra:30,madera:20}, foundry:{madera:30,piedra:40},
+  mint:{hierro:50}, temple:{piedra:30}, barracks:{hierro:40,madera:20},
 };
 const PROD_RATE=2, PROD_CAP=200, BANK_CAP=500, MAT_FLOW=25;
 function resOf(b:any): string|null{

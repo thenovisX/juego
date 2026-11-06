@@ -43,3 +43,13 @@ Tipos de unidades, tecnología, multijugador online (Node.js + WebSockets), fuen
 - **Mejoras:** clic en un edificio propio para subirlo hasta nivel 3.
 - **Guardar/cargar:** 💾 y 📂 (archivo .json con versión).
 - **Pruebas sin navegador:** `BUILD.bat` compila y ejecuta `tools/test-*.mjs` (simulación, guardado, mejoras/economía, impuestos, aviones, buques, bots y materiales).
+
+## Rediseño de ritmo y estructuras
+- **Ritmo más pausado:** el crecimiento de población es un 40% más lento, los ataques avanzan menos casillas por segundo y las obras tardan 8 s en vez de 5 s.
+- **Población x100:** tropas, población máxima y coste de conquista van multiplicados por 100 (`POP_X`). El oro NO depende de la población (impuestos, edificios y comercio no cambian).
+- **Estructuras con un uso preciso:** la barra de construcción tiene pestañas (Economía, Pueblo, Defensa, Logística, Armas, Órdenes). Al pasar el ratón por un edificio se lee qué hace (con números), cuánto cuesta y dónde se puede poner; al colocarlo se ve su radio.
+- **Nuevas estructuras de oro:** Mercado (+250 oro/s por ciudad cerca), Casa de la moneda (+200 y +150 por mina o metalúrgica cerca), Casa de comercio (+300 oro/s por socio comercial). También: Templo (+felicidad, permite subir impuestos) y Cuartel (+población máxima y reclutamiento).
+- **Más interacción con las tropas:** posturas de combate (equilibrada, ofensiva, defensiva), retirar o reforzar cada frente (↩ / ➕) o todos a la vez, reclutar tropas con oro en un Cuartel y enviar refuerzos a un aliado desde Diplomacia.
+- Los iconos nuevos (`assets/icons/market, mint, tradehouse, temple, barracks, recruit, retreat, reinforce, stance_*`) son provisionales (emoji): se pueden sustituir por arte propio con los mismos nombres.
+- Las partidas guardadas con la versión anterior ya no se pueden cargar (versión de guardado 2).
+- Prueba nueva: `node tools/test-estructuras.mjs`.

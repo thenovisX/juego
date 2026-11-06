@@ -15,6 +15,11 @@ const UP_DESC={
   silo:"los misiles llegan más rápido",
   station:"la red cubre más radio",
   airport:"los aviones comerciales pagan más",
+  market:"+100% de oro por nivel",
+  mint:"+100% de oro por nivel",
+  tradehouse:"+100% de oro por nivel",
+  temple:"+4 de felicidad más por nivel",
+  barracks:"más población máxima y se recluta más gente de una vez",
 };
 function upCost(b:any){ return Math.round(BT[b.t].base*2*Math.pow(2,b.lvl-1)); }
 function maxLvl(list:any[]){ return Math.max(1,...list.map((b:any)=>b.lvl||1)); }

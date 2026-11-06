@@ -6,7 +6,7 @@
 <title>Hegemonía</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus+SC&family=IBM+Plex+Sans+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
-<link rel="stylesheet" href="css/style.css?v=7">
+<link rel="stylesheet" href="css/style.css?v=8">
 </head>
 <body>
 <canvas id="cv"></canvas>
@@ -24,7 +24,7 @@
     <input id="tax" type="range" min="0" max="80" step="5" value="10" aria-label="Tasa de impuestos">
     <div class="hap" title="Felicidad del pueblo: con menos de 50 baja la economía; con menos de 25 hay revueltas"><span id="hapE">{{f2}}</span><div class="meter"><div id="hapM"></div></div><b id="hapV" class="num">80</b></div></div>
   <div id="mats" class="mats" title="Materiales almacenados en minas, aserraderos, granjas y bancos"></div>
-  <div id="wars"></div>
+  <div id="wars" title="Frentes abiertos: ↩ retira las tropas, ➕ manda un 25% más de tu reserva"></div>
 </div>
 
 <div id="board" class="panel" hidden><h2><span>{{board}} Potencias</span><span class="num" id="aliveN"></span></h2><ol id="boardList"></ol></div>
@@ -34,14 +34,18 @@
   <input id="ratio" type="range" min="5" max="100" step="5" value="30" aria-label="Porcentaje de tropas a enviar">
   <div class="presets"><button type="button" class="btn" data-r="10">10%</button><button type="button" class="btn" data-r="25">25%</button><button type="button" class="btn" data-r="50">50%</button><button type="button" class="btn" data-r="75">75%</button><button type="button" class="btn" data-r="100">Todas</button></div>
   <div class="sn">≈ <b id="ratioN" class="num">0</b> tropas por ataque <kbd>Q</kbd><kbd>E</kbd></div>
+  <div class="sh"><span>Postura de combate</span></div>
+  <div class="presets" id="stances"></div>
+  <div class="sn" id="stanceInfo"></div>
 </div>
 
 <div id="dock" class="panel" hidden>
-  <div class="grp-w"><div class="gl">Construir</div><div class="grp" id="bld"></div></div>
-  <div class="sep"></div>
-  <div class="grp-w"><div class="gl">Armamento</div><div class="grp" id="weap"></div></div>
-  <div class="sep"></div>
-  <div class="grp-w"><div class="gl">Diplomacia</div><div class="grp"><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button></div></div>
+  <div class="dhead"><div id="dtabs" role="tablist"></div><div id="dinfo" aria-live="polite"></div></div>
+  <div class="dbody">
+    <div id="panes"></div>
+    <div class="sep"></div>
+    <div class="grp-w"><div class="gl">Diplomacia</div><div class="grp"><button class="btn card" id="dipBtn" type="button" title="Diplomacia: elige un reino"><kbd>D</kbd><span class="em">{{ally}}</span><span class="lb">Diplomacia</span><span class="co">pactos</span></button></div></div>
+  </div>
 </div>
 
 <div id="side" hidden>
@@ -76,6 +80,6 @@
   <button class="btn go2" id="loadStartBtn" type="button" disabled>{{load}} Cargar partida guardada</button>
   <input id="loadFile" type="file" accept=".json,application/json" hidden>
 </div></div>
-<script src="dist/game.js?v=17"></script>
+<script src="dist/game.js?v=18"></script>
 </body>
 </html>
