@@ -268,5 +268,6 @@ html,body{background:radial-gradient(ellipse at 50% 30%,#12263a,#070d14)}
 #wars .fr button{background:#22323f;color:var(--fg);border:1px solid var(--line);border-radius:5px;padding:0 6px;cursor:pointer;font-size:12px;line-height:1.5}
 #wars .fr button:hover{border-color:var(--brass)}
 .card.tro .co{color:#9fd3ff}
+.card.res .co{color:#b6a2ff}
 
 @media (max-width:1150px){ #send{bottom:calc(200px + env(safe-area-inset-bottom,0px))} #log{bottom:calc(420px + env(safe-area-inset-bottom,0px))} }

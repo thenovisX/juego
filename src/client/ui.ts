@@ -121,6 +121,12 @@ const infoBT=t=>()=>{ const d=BT[t]; return `<span><b>${d.e} ${d.n}</b> · <span
 const infoW=t=>()=>{ const d=WEAP[t]; return `<span><b>${d.e} ${d.n}</b> · ${fmt(d.cost)} {{gold}} — ${d.desc} <span class="mut">Necesita un Silo terminado. Elige el objetivo en el mapa (radio ${d.r}).</span></span>`; };
 const infoText=(e,n,txt,extra)=>()=>`<span><b>${e} ${n}</b> — ${txt} <span class="mut">${extra||""}</span></span>`;
 for(const t in BT) mkCard(paneOf[BT[t].cat],"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+" "+BT[t].where+matText(t),()=>{ setCat(BT[t].cat); toggleMode({k:"build",t}); },"",infoBT(t));
+// ---- Investigación (pestaña Ciencia)
+const infoR=t=>()=>{ const R=RESEARCH[t], r=me.res, why=researchAvail(me,t), rate=rpRate(me);
+  const st=r.done[t]?"Investigado.":r.cur===t?`En curso: ${Math.floor(r.prog)} / ${R.cost} puntos`+(rate>0?` · quedan ${fmtTime((R.cost-r.prog)/rate)}`:""):why?why:`Cuesta ${R.cost} puntos`+(rate>0?` · ${fmtTime(R.cost/rate)} con tus universidades`:" · construye una Universidad");
+  return `<span><b>${R.e} ${R.n}</b> — ${R.desc} <span class="mut">${st} Tienes ${rate} punto${rate===1?"":"s"}/s (1 por nivel de universidad: con más universidades tardas menos).</span></span>`; };
+const fmtTime=s=>s>=60?Math.floor(s/60)+" min "+Math.round(s%60)+" s":Math.round(s)+" s";
+for(const t in RESEARCH){ mkCard(paneOf.sci,"r_"+t,RESEARCH[t].e,RESEARCH[t].n,"","Investigar: "+RESEARCH[t].desc,()=>{ const why=startResearch(me,t); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); log(`{{science}} Investigando ${RESEARCH[t].n}.`); } },"res",infoR(t)); document.querySelector("#r_"+t+" kbd").remove(); }
 for(const t in WEAP) mkCard(paneOf.arm,"w_"+t,WEAP[t].e,WEAP[t].n,WEAP[t].key,WEAP[t].desc,()=>toggleMode({k:"weap",t}),"weap",infoW(t));
 mkCard(paneOf.arm,"w_ship","{{wship}}","Buque","B","Buque de guerra: patrulla desde tu puerto, intercepta cargueros enemigos y se queda su oro",()=>{ const why=buyWarship(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); selShip=wships.filter(w=>w.owner===me.id).pop(); setMode({k:"patrol"}); log("{{wship}} Buque de guerra botado. Toca el punto del mar donde quieres que patrulle: se quedará por esa zona y cañoneará a los cargueros enemigos que entren."); } },"weap",
   infoText("{{wship}}","Buque de guerra","patrulla una zona del mar y se queda con la carga de los cargueros ajenos (salvo socios y aliados).","Necesita un Puerto terminado."));
@@ -229,7 +235,7 @@ function renderDip(){
   const pct=Math.round(ratio*100), siloOk=me.B.silo.some(b=>b.done<=tick), mil=[], trd=[];
   mil.push(`<button class="btn" type="button" data-a="attack">{{attack}} Atacar <small>${pct}% · ${fmt(me.troops*ratio)}</small></button>`);
   mil.push(`<button class="btn" type="button" data-a="boat" ${me.B.port.some(b=>b.done<=tick)?"":"disabled"}>{{boat}} Enviar barco <small>${pct}% · desembarco</small></button>`);
-  for(const t in WEAP){ const w=WEAP[t], off=!siloOk||me.gold<w.cost;
+  for(const t in WEAP){ const w=WEAP[t], off=!siloOk||me.gold<w.cost||!!researchWhy(me,t);
     mil.push(`<button class="btn" type="button" data-a="bomb:${t}" ${off?"disabled":""} title="${siloOk?w.desc:"Necesitas un silo terminado"}">${w.e} ${w.n} <small>${fmt(w.cost)} {{gold}}</small></button>`); }
   if(r.trade){ const why=tradeCheck(me.id,dipFor);
     trd.push(`<button class="btn" type="button" data-a="ship" ${why?"disabled":""} title="${why||"Exporta materiales por mar"}">{{cargo}} Enviar cargamento <small>+${fmt(tradeValue(me))} {{gold}}</small></button>`); }
@@ -303,9 +309,12 @@ function updateHud(){
   document.getElementById("hLand").textContent=(me.tiles/landTotal*100).toFixed(2)+"%";
   const alive=players.filter(p=>p.alive).sort((a,b)=>b.tiles-a.tiles);
   document.getElementById("hRank").textContent=me.alive?"#"+(alive.indexOf(me)+1)+" de "+alive.length:"—";
-  for(const t in BT){ const c=bCost(me,t); document.getElementById("b_"+t+"_c").textContent=fmt(c); document.getElementById("b_"+t).disabled=me.gold<c||!me.alive; }
+  for(const t in BT){ const c=bCost(me,t), lock=!!researchWhy(me,t); document.getElementById("b_"+t+"_c").textContent=lock?"🔒 investigar":fmt(c); document.getElementById("b_"+t).disabled=lock||me.gold<c||!me.alive; }
+  { const rate=rpRate(me); for(const t in RESEARCH){ const R=RESEARCH[t], el=document.getElementById("r_"+t), c=document.getElementById("r_"+t+"_c");
+      c.textContent=me.res.done[t]?"✔ listo":me.res.cur===t?Math.floor(me.res.prog/R.cost*100)+"%":researchAvail(me,t)?"🔒":R.cost+" pts";
+      el.disabled=!me.alive||!!researchAvail(me,t)||rate<=0; el.classList.toggle("on",me.res.cur===t); } }
   const silo=me.B.silo.some(b=>b.done<=tick);
-  for(const t in WEAP){ document.getElementById("w_"+t+"_c").textContent=fmt(WEAP[t].cost); const el=document.getElementById("w_"+t); el.disabled=!silo||me.gold<WEAP[t].cost||!me.alive; el.title=silo?WEAP[t].desc:"Construye un {{silo}} Silo para desbloquear"; }
+  for(const t in WEAP){ const lock=!!researchWhy(me,t); document.getElementById("w_"+t+"_c").textContent=lock?"🔒 investigar":fmt(WEAP[t].cost); const el=document.getElementById("w_"+t); el.disabled=lock||!silo||me.gold<WEAP[t].cost||!me.alive; el.title=lock?researchWhy(me,t):silo?WEAP[t].desc:"Construye un {{silo}} Silo para desbloquear"; }
   { const ok=me.B.port.some(b=>b.done<=tick); document.getElementById("w_ship_c").textContent=fmt(WSHIP_COST); document.getElementById("w_ship").disabled=!ok||me.gold<WSHIP_COST||!me.alive; }
   { const ok=readyAirports(me).length>0; document.getElementById("w_plane_c").textContent=fmt(WPLANE_COST); document.getElementById("w_plane").disabled=!ok||me.gold<WPLANE_COST||!me.alive; }
   { const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1, mine=attacks.some(a=>a.att===me.id);
@@ -342,6 +351,7 @@ function showHelp(){
   <p><b>Construir:</b> la barra de abajo tiene pestañas. Pasa el ratón (o toca) cada edificio para leer para qué sirve, cuánto cuesta y dónde se puede poner. Mantén Mayús para construir varios. Clic en un edificio tuyo para mejorarlo.</p>
   <p><b>{{gold}} Ganar oro:</b> la base son los <b>impuestos</b> (deslizador). Encima: {{sawmill}} aserraderos, {{farm}} granjas y {{foundry}} metalúrgicas; {{market}} <b>mercados</b> junto a ciudades; {{mint}} <b>casas de la moneda</b> junto a minas; {{tradehouse}} <b>casas de comercio</b> por cada socio comercial. El oro NO depende de cuánta población tengas.</p>
   <p><b>Felicidad:</b> más impuestos = pueblo descontento. Los {{temple}} templos la suben para que puedas cobrar más sin revueltas.</p>
+  <p><b>{{science}} Ciencia:</b> construye {{university}} <b>Universidades</b> (pestaña Ciencia): cada una da 1 punto de investigación por segundo. Con ellos investigas, de una en una, lo que desbloquea Casas de la moneda, Casas de comercio, Antiaéreas, Aeropuertos, Silos y las bombas atómica y H. Cuantas más universidades tengas, antes lo desbloqueas.</p>
   <p><b>Bombardear:</b> con un {{silo}} Silo terminado se desbloquean misil, atómica y bomba H (8, 9, 0). Las {{sam}} Antiaéreas las derriban.</p>
   <p><b>Clic derecho</b> (o pulsación larga) sobre un reino: atacar, enviar barco, lanzar misil/bomba, pactos, comercio y refuerzos a aliados.</p>
   <p><b>Comercio:</b> con acuerdo comercial y {{port}} puertos puedes enviar {{cargo}} cargueros que dan oro. Las {{station}} Estaciones (a menos de 40 una de otra) conectan minas, ciudades y puertos cercanos (radio 14): +50% de producción y exportación.</p>

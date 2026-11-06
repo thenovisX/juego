@@ -24,6 +24,7 @@ function botThink(p){
   const tryPlace=(t,pool?)=>{ for(let k=0;k<12;k++){ const i=pool?pool[(rnd()*pool.length)|0]:L[(rnd()*L.length)|0]; if(!canBuild(p,t,i)){ placeBuilding(p,t,i,false); return true; } } return false; };
   const hit = tick-p.lastHit<600;
   if(p.gold>bCost(p,"city") && p.cnt.city < 1+p.tiles/4000) tryPlace("city");
+  else if(p.gold>bCost(p,"university") && p.cnt.university < Math.min(4,1+p.tiles/8000)) tryPlace("university");
   else if(p.gold>bCost(p,"sam") && (hit || p.tiles>12000) && p.cnt.sam < 1+p.tiles/30000) tryPlace("sam");
   else if(p.gold>bCost(p,"mine") && p.cnt.mine < p.tiles/3000) tryPlace("mine");
   else if(p.gold>bCost(p,"sawmill") && p.cnt.sawmill<p.tiles/5000) tryPlace("sawmill");

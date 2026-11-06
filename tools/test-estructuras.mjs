@@ -17,7 +17,7 @@ me.troops *= 3; ok(Math.abs(g.stats(me).inc - base.inc) < 1e-6, "el oro que gana
 const L = g.tilesOf[me.id], city = g.buildings.find(b => b.owner === me.id && b.t === "city");
 const free = (dx, dy) => { const i = ((city.y + dy) * g.W + city.x + dx); return i; };
 ok(typeof g.canBuild(me, "market", free(30, 0)) === "string", "mercado lejos de una ciudad se rechaza");
-me.gold = 1e9;
+me.gold = 1e9; me.res.done.mint = true;
 const at = (dx, dy) => L.find(i => Math.abs((i % g.W) - city.x - dx) < 2 && Math.abs(((i / g.W) | 0) - city.y - dy) < 2);
 const iM = at(7, 0); ok(iM !== undefined && g.canBuild(me, "market", iM) === null, "mercado junto a una ciudad se permite");
 g.placeBuilding(me, "market", iM, true); g.tick = 100; g.refreshEff();

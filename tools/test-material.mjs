@@ -11,7 +11,7 @@ g.setupWorld(); g.newGame("T", 5, 1);
 const me = g.players[0];
 let spot = -1; for (let i = g.tilesOf.length ? (g.terrain.length / 3 | 0) : 0; i < g.terrain.length; i++) if (g.terrain[i] && g.terrain[i] !== 5 && g.owner[i] < 0) { spot = i; break; }
 g.spawnAt(me, spot % 2000, (spot / 2000) | 0, 14);
-me.gold = 1e12;
+me.gold = 1e12; me.res.done.silo = true;
 const T = g.tilesOf[me.id];
 const near = (a, type, minD, maxD) => T.find(i => { const d = Math.hypot(g.wdx(i % 2000, a.x), ((i / 2000) | 0) - a.y); return d >= minD && d <= maxD && !g.canBuild(me, type, i); });
 
