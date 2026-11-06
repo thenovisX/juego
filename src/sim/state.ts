@@ -36,7 +36,7 @@ const BT = {
   sam:{cat:"def", n:"Antiaérea", e:"{{sam}}", key:"5", base:120000, mul:1.5, r:40, desc:"Intenta derribar (75% de acierto, 40% contra la bomba H) un misil que caiga a menos de 40 casillas (recarga 15 s). Protege también a tus aliados.", where:"Cualquier terreno propio."},
   station:{cat:"log", n:"Estación", e:"{{station}}", key:"7", base:50000, mul:1.35, r:14, desc:"Lleva materiales por vía a las obras cercanas (radio 14). Las estaciones a menos de 40 forman red: +50% de producción y exportación.", where:"Junto a minas, ciudades y puertos, sin pegarla."},
   bank:{cat:"log", n:"Banco de materiales", e:"{{bank}}", key:"m", base:50000, mul:1.4, desc:"Guarda hasta 500 de cada material y lo reparte por la red de estaciones.", where:"Dentro del radio de una estación."},
-  port:{cat:"log", n:"Puerto", e:"{{port}}", key:"4", base:35000, mul:1.5, desc:"Envía flotas de desembarco y cargueros de comercio a otras costas.", where:"Solo junto al mar."},
+  port:{cat:"log", n:"Puerto", e:"{{port}}", key:"4", base:35000, mul:1.5, desc:"Envía flotas de desembarco y cargueros de comercio a otras costas.", where:"Pulsa cerca de tu costa (hasta 12 casillas): se coloca sola junto al mar."},
   airport:{cat:"log", n:"Aeropuerto", e:"{{airport}}", key:"a", base:400000, mul:1.5, desc:"Despacha aviones comerciales que pagan oro a tus socios; con aviones de guerra derribas los ajenos.", where:"Cualquier terreno propio."},
   arsenal:{cat:"arm", n:"Arsenal", e:"{{arsenal}}", key:"o", base:70000, mul:1.6, max:3, desc:"Fabrica tanques y artillería (se compran en esta pestaña con oro y materiales). Cada nivel permite guardar 4 piezas más de cada tipo.", where:"Cualquier terreno propio. Máx. 3."},
   silo:{cat:"arm", n:"Silo", e:"{{silo}}", key:"6", base:80000, mul:1.6, desc:"Desbloquea misil, atómica y bomba H.", where:"Cualquier terreno propio."},
@@ -94,6 +94,7 @@ function markDirty(i){ if(!dirty[i]){ dirty[i]=1; dirtyList.push(i);} }
 // Crea (vacíos) todos los arrays por casilla del mapa activo y reinicia el estado de la partida.
 function allocWorld(){
   owner=new Int16Array(N).fill(-1); bldAt=new Int32Array(N).fill(-1); tileIdx=new Int32Array(N).fill(-1);
+  annexSeen=new Uint32Array(N); annexStamp=0;
   wall=new Uint8Array(N); fallout=new Uint32Array(N); dirty=new Uint8Array(N); dirtyList=[];
   players=[]; tilesOf=[]; buildings=[]; attacks=[]; boats=[]; missiles=[]; blasts=[]; falloutQ=[];
   tick=0; me=null; started=false; paused=false; over=false; spawned=false; spectating=false; P=0; opin=null; rels.clear();
