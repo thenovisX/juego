@@ -32,7 +32,7 @@ const BT = {
   temple:{cat:"pop", n:"Templo", e:"{{temple}}", key:"g", base:35000, mul:1.5, max:4, desc:"+4 de felicidad por nivel (hasta +15 en total): puedes subir los impuestos sin provocar revueltas.", where:"Cualquier terreno propio. Máx. 4."},
   barracks:{cat:"pop", n:"Cuartel", e:"{{barracks}}", key:"h", base:40000, mul:1.5, max:4, desc:"+100.000 de población máxima por nivel, tropas que crecen más rápido y permite RECLUTAR: paga oro y consigue tropas al instante.", where:"Cualquier terreno propio. Máx. 4."},
   fort:{cat:"def", n:"Fortaleza", e:"{{fort}}", key:"3", base:22000, mul:1.35, r:14, desc:"Las casillas a menos de 14 son 2,5 veces más caras de conquistar.", where:"Ponla en la frontera con un vecino peligroso."},
-  sam:{cat:"def", n:"Antiaérea", e:"{{sam}}", key:"5", base:120000, mul:1.5, r:40, desc:"Derriba un misil que caiga a menos de 40 casillas (recarga 15 s). Protege también a tus aliados.", where:"Cualquier terreno propio."},
+  sam:{cat:"def", n:"Antiaérea", e:"{{sam}}", key:"5", base:120000, mul:1.5, r:40, desc:"Intenta derribar (75% de acierto, 40% contra la bomba H) un misil que caiga a menos de 40 casillas (recarga 15 s). Protege también a tus aliados.", where:"Cualquier terreno propio."},
   station:{cat:"log", n:"Estación", e:"{{station}}", key:"7", base:50000, mul:1.35, r:14, desc:"Lleva materiales por vía a las obras cercanas (radio 14). Las estaciones a menos de 40 forman red: +50% de producción y exportación.", where:"Junto a minas, ciudades y puertos, sin pegarla."},
   bank:{cat:"log", n:"Banco de materiales", e:"{{bank}}", key:"m", base:50000, mul:1.4, desc:"Guarda hasta 500 de cada material y lo reparte por la red de estaciones.", where:"Dentro del radio de una estación."},
   port:{cat:"log", n:"Puerto", e:"{{port}}", key:"4", base:35000, mul:1.5, desc:"Envía flotas de desembarco y cargueros de comercio a otras costas.", where:"Solo junto al mar."},
@@ -52,7 +52,9 @@ const STANCE = {
 };
 const RECRUIT_TROOPS=20000, RECRUIT_COST=30000, RECRUIT_CD=250, REINF_CD=600;
 const MKT_R=20, MKT_MAX=4, MINT_R=20, MINT_MAX=5, TRADE_MAX=5;
-const ST_LINK=40, ST_COV=14, BUILD_TIME=80, FORT_R=14, SAM_R=40, SAM_CD=150, NAP_TIME=3000;
+const ST_LINK=40, ST_COV=14, BUILD_TIME=80, FORT_R=14, SAM_R=40, SAM_CD=150, NAP_TIME=3000, ALLY_TIME=6000, IMMUNE_TIME=450, BETRAY_TIME=300, SAM_HIT=0.75, SAM_HIT_H=0.4, ANNEX_MAX=400;
+// Velocidad de avance de un ataque según el terreno de la casilla que se conquista (1 = normal)
+const TER_SPEED=[1,1,0.9,0.7,1,0.85];
 
 function nbs(i,out){ const x=i%W; out[0]= x===0 ? i+W-1 : i-1; out[1]= x===W-1 ? i-W+1 : i+1; out[2]= i>=W ? i-W : -1; out[3]= i<N-W ? i+W : -1; return out; }
 const NB=[0,0,0,0], NB2=[0,0,0,0];
