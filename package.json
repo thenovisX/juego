@@ -9,6 +9,7 @@
     "web": "node server/server.js",
     "build": "node tools/build.mjs --check",
     "test": "node tools/test-sim.mjs",
+    "test:net": "node tools/test-net.mjs",
     "dist": "electron-builder --win"
   },
   "devDependencies": {
