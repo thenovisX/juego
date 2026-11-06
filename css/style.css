@@ -154,7 +154,7 @@ button{font:inherit;color:inherit}
 #top .mats{font-family:var(--f-num);font-size:12px;color:var(--muted);margin-top:2px}
 
 /* iconos del juego (assets/icons) que sustituyen a los emoticonos */
-.ico{ display:inline-block; width:1.15em; height:1.15em; vertical-align:-0.22em; object-fit:contain; }
+.ico{ filter:drop-shadow(0 0 1px rgba(255,255,255,.7)); display:inline-block; width:1.15em; height:1.15em; vertical-align:-0.22em; object-fit:contain; }
 
 /* ===== Rediseño v8: aspecto "mesa de mando" — latón, cristal oscuro, pestañas y tarjetas con relieve ===== */
 :root{

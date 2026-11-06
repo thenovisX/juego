@@ -40,6 +40,7 @@ Tipos de unidades, tecnología, fuentes locales para jugar sin internet. Multiju
 
 ## Desarrollo (TypeScript)
 - Código fuente en `src/`: `src/sim` (simulación, sin DOM: mapa, economía, combate, IA, diplomacia, comercio) y `src/client` (dibujo, interfaz, sonido). La simulación solo habla con el cliente a través de `Hooks` (`src/sim/hooks.ts`), así que un servidor Node puede reutilizarla.
+- Iconos: SVG planos generados por código con `node tools/gen-icons.mjs` (assets/icons/*.svg); edita ese script para cambiarlos.
 - `BUILD.bat` recompila a `dist/game.js` (juego) y `dist/sim.js` (solo simulación), comprueba tipos y ejecuta una partida sin navegador (`tools/test-sim.mjs`).
 - `JUGAR.bat` abre `index.html`, que carga `dist/game.js`; no necesita Node. Node portable está en `tools/` (solo para compilar).
 
