@@ -29,7 +29,7 @@ Los scripts se cargan en el orden de `index.html`; comparten el mismo espacio gl
 Para Steam se usa Steamworks con el paquete `steamworks.js` (logros, nube, multijugador) dentro de Electron.
 
 ## Pendiente
-Tipos de unidades, tecnología, multijugador online (Node.js + WebSockets), fuentes locales para jugar sin internet.
+Tipos de unidades, tecnología, fuentes locales para jugar sin internet. Multijugador: ver `docs/MULTIJUGADOR.md` (reconectar a media partida, elegir dónde nacer).
 
 ## Desarrollo (TypeScript)
 - Código fuente en `src/`: `src/sim` (simulación, sin DOM: mapa, economía, combate, IA, diplomacia, comercio) y `src/client` (dibujo, interfaz, sonido). La simulación solo habla con el cliente a través de `Hooks` (`src/sim/hooks.ts`), así que un servidor Node puede reutilizarla.

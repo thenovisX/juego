@@ -10,7 +10,7 @@ function buyWarship(p){
   const ports=readyPorts(p); if(!ports.length) return "Necesitas un puerto terminado.";
   if(wships.filter(w=>w.owner===p.id).length>=WSHIP_MAX) return `Máximo ${WSHIP_MAX} buques de guerra.`;
   if(p.gold<WSHIP_COST) return `Te faltan ${fmt(WSHIP_COST-p.gold)} de oro.`;
-  const port=ports[(Math.random()*ports.length)|0], sea=waterNear(port.i,[])[0];
+  const port=ports[(rnd()*ports.length)|0], sea=waterNear(port.i,[])[0];
   if(sea===undefined) return "El puerto no tiene salida al mar.";
   p.gold-=WSHIP_COST; const x=sea%W+0.5, y=((sea/W)|0)+0.5;
   wships.push({owner:p.id,x,y,hx:x,hy:y,zx:x,zy:y,target:null,fire:0,trail:[[x,y]]});
@@ -48,7 +48,7 @@ function stepNavy(){
     if(w.target){ const s=w.target, d=Math.hypot(wdx(w.x,s.x),w.y-s.y);
       if(d>WSHIP_FIRE){ w.fire=0; sailToward(w,s.x,s.y,WSHIP_SPEED); }
       else { // a tiro: cañonea el carguero hasta rendirlo
-        w.fire++; if(w.fire%3===0) shots.push({x:w.x,y:w.y,tx:s.x+(Math.random()-0.5),ty:s.y+(Math.random()-0.5),t:0,dur:6});
+        w.fire++; if(w.fire%3===0) shots.push({x:w.x,y:w.y,tx:s.x+(rnd()-0.5),ty:s.y+(rnd()-0.5),t:0,dur:6});
         if(w.fire>=18){ s.done=true; P.gold+=s.val; P.st.trade=(P.st.trade||0)+s.val; addOp(s.from,w.owner,-25); w.target=null; w.fire=0;
           if(w.owner===me.id) Hooks.log(`{{pirate}} Tu buque ha capturado un carguero de ${players[s.from].name}: +${fmt(s.val)} de oro.`,"good");
           else if(s.from===me.id) Hooks.log(`{{pirate}} ${P.name} ha capturado tu carguero y se queda ${fmt(s.val)} de oro.`,"bad"); } } }
