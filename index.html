@@ -23,6 +23,7 @@
   <div class="tax"><span class="lbl">{{tax}} Impuestos <b id="taxV" class="num">10%</b></span>
     <input id="tax" type="range" min="0" max="80" step="5" value="10" aria-label="Tasa de impuestos">
     <div class="hap" title="Felicidad del pueblo: con menos de 50 baja la economía; con menos de 25 hay revueltas"><span id="hapE">{{f2}}</span><div class="meter"><div id="hapM"></div></div><b id="hapV" class="num">80</b></div></div>
+  <div id="nation" class="mats" title="Autoridad para tradiciones e infamia por atacar sin casus belli"></div>
   <div id="mats" class="mats" title="Materiales almacenados en minas, aserraderos, granjas y bancos"></div>
   <div id="wars" title="Frentes abiertos: ↩ retira las tropas, ➕ manda un 25% más de tu reserva"></div>
 </div>
@@ -84,6 +85,6 @@
   <button class="btn go2" id="loadStartBtn" type="button" disabled>{{load}} Cargar partida guardada</button>
   <input id="loadFile" type="file" accept=".json,application/json" hidden>
 </div></div>
-<script src="dist/game.js?v=18"></script>
+<script src="dist/game.js?v=19"></script>
 </body>
 </html>

@@ -101,7 +101,7 @@ function botThink(p){
   if(s.neutral>0 && rnd()<0.85){ launchAttack(p.id,-1,p.troops*(0.25+rnd()*0.2),borderCandidates(p.id,-1)); return; }
   let target=-1, best=-1e9;
   for(const [o,cnt] of s.enemies){ if(peaceful(p.id,o)) continue; const e=players[o], ratio=p.troops/Math.max(1,e.troops);
-    const score=ratio*2+cnt*0.02+(o===p.rival?1:0)+(!players[o].isBot?0.3*diff:0)-op(p.id,o)/40;
+    const score=ratio*2+cnt*0.02+(o===p.rival?1:0)+(!players[o].isBot?0.3*diff:0)+((e.infamy||0)>=INFAMY_COALITION?1.5:0)-op(p.id,o)/40;
     if(ratio<0.7) continue; if(score>best){best=score;target=o;} }
   if(target>=0){ p.rival=target; launchAttack(p.id,target,p.troops*Math.max(0.3,Math.min(0.75,0.3+0.2*Math.log(Math.max(1,p.troops/Math.max(1,players[target].troops))))),borderCandidates(p.id,target)); return; }
   if(s.neutral===0 && !s.enemies.size && p.B.port.some(b=>b.done<=tick) && rnd()<0.4){
