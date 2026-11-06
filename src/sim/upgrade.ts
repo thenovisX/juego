@@ -3,6 +3,7 @@
 // y cambia su efecto (ver UP_DESC). Los efectos se aplican en el cálculo de cada sistema, no copiando datos.
 const MAX_LVL=3;
 const UP_DESC={
+  university:"+1 punto de investigación por segundo por nivel",
   city:"+2000 tropas máximas y crecen más rápido por nivel",
   mine:"más minerales y más empleo (impuestos y felicidad) por nivel",
   sawmill:"más oro y más madera por nivel",

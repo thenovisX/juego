@@ -17,7 +17,7 @@ function stepDiplomacy(){
 function gameTick(){
   if(!started || !spawned || paused || (over && !spectating)) return;
   tick++;
-  stepEconomy(); stepAttacks(); stepBoats(); stepMissiles(); stepTrade(); stepNavy(); stepAir(); stepTax(); stepMaterials(); stepFallout(); stepDiplomacy();
+  stepEconomy(); stepAttacks(); stepBoats(); stepMissiles(); stepTrade(); stepNavy(); stepAir(); stepTax(); stepResearch(); stepMaterials(); stepFallout(); stepDiplomacy();
   for(const p of players){ if(p.isBot && p.alive && (tick+p.thinkAt)%10===0) botThink(p); }
   Hooks.tick(tick);
   if(!over && me.alive && me.tiles>=landTotal*0.6){ Hooks.end(true); }

@@ -7,7 +7,7 @@ function newPlayer(name,c,isBot){
   const p={id,name,c,isBot,alive:true,troops:700*POP_X,stance:"bal",tax:10,happy:80,taxWarn:0,gold:150*GOLD_X,tiles:0,sumX:0,sumY:0,
     cnt:Object.fromEntries(Object.keys(BT).map(k=>[k,0])), B:Object.fromEntries(Object.keys(BT).map(k=>[k,[]])),
     aggro:0.15+Math.random()*0.25, thinkAt:(Math.random()*20)|0, rival:-1, focus:-1, traitorUntil:0, lastHit:-1e9,
-    st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};
+    res:{done:{},cur:null,prog:0}, st:{maxTiles:0,kills:0,built:0,bombs:0,born:0,killer:-1}};
   players.push(p); tilesOf.push([]); return p;
 }
 function setOwner(i,p){
@@ -104,6 +104,7 @@ function canBuild(p,t,i){
   if(t==="port" && !coastal(i)) return "El puerto tiene que estar junto al mar.";
   if(t==="sawmill" && terrain[i]!==2) return "El aserradero va en un bosque.";
   if(t==="farm" && terrain[i]!==1) return "La granja va en una llanura.";
+  { const why=researchWhy(p,t); if(why) return why; }
   if(BT[t].max && p.cnt[t]>=BT[t].max) return `Solo puedes tener ${BT[t].max} de este edificio (mejóralos en vez de construir más).`;
   if(t==="market" && !nearAny(p.B.city,x,y,MKT_R)) return "El mercado necesita una ciudad a menos de 20 casillas.";
   if(t==="mint" && !nearAny(p.B.mine.concat(p.B.foundry),x,y,MINT_R)) return "La casa de la moneda necesita una mina o metalúrgica a menos de 20 casillas.";

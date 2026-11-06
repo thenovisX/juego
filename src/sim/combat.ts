@@ -149,6 +149,7 @@ function stepBoats(){
 // ================= Misiles =================
 function launchMissile(p,type,ti){
   const W8=WEAP[type], silos=p.B.silo.filter(b=>b.done<=tick);
+  { const why=researchWhy(p,type); if(why) return why; }
   if(!silos.length) return "Necesitas un silo de misiles terminado.";
   if(p.gold<W8.cost) return `Te faltan ${fmt(W8.cost-p.gold)} de oro.`;
   const o=owner[ti];

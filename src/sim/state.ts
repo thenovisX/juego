@@ -17,6 +17,7 @@ const CATS: any = {
   def:{n:"Defensa",        e:"{{shield}}",  tip:"Hacen más difícil conquistarte o derriban los misiles enemigos."},
   log:{n:"Logística",      e:"{{station}}", tip:"Conectan tu reino: materiales por vías, comercio por mar y por aire."},
   arm:{n:"Armamento", short:"Armas",      e:"{{missile}}", tip:"Silo para misiles y bombas, y flotas o aviones de guerra para cazar el comercio enemigo."},
+  sci:{n:"Ciencia",        e:"{{science}}", tip:"Las universidades generan puntos de investigación. Cuantas más universidades, antes desbloqueas edificios y armas avanzadas."},
   tro:{n:"Órdenes",        e:"{{attack}}",  tip:"Reclutar, retirar o reforzar las tropas que están en combate."},
 };
 // desc = para qué sirve (con números), where = dónde / qué necesita, r = radio de efecto, max = máximo permitido
@@ -28,6 +29,7 @@ const BT = {
   market:{cat:"eco", n:"Mercado", e:"{{market}}", key:"r", base:45000, mul:1.45, r:20, desc:"+250 oro/s por cada ciudad a menos de 20 casillas (hasta 4 ciudades).", where:"Necesita una ciudad cerca (radio 20)."},
   mint:{cat:"eco", n:"Casa de la moneda", e:"{{mint}}", key:"c", base:90000, mul:1.6, r:20, max:3, desc:"+200 oro/s fijos y +150 oro/s por cada mina o metalúrgica a menos de 20 casillas (hasta 5).", where:"Necesita una mina o metalúrgica cerca (radio 20). Máx. 3."},
   tradehouse:{cat:"eco", n:"Casa de comercio", e:"{{tradehouse}}", key:"x", base:60000, mul:1.5, max:2, desc:"+300 oro/s por cada acuerdo comercial activo (hasta 5 socios).", where:"No depende del sitio. Máx. 2. Firma acuerdos en Diplomacia."},
+  university:{cat:"sci", n:"Universidad", e:"{{university}}", key:"t", base:55000, mul:1.45, desc:"Genera 1 punto de investigación por segundo (por nivel). Cada universidad extra suma: investigas más rápido.", where:"Cualquier terreno propio. Elige qué investigar en esta pestaña."},
   city:{cat:"pop", n:"Ciudad", e:"{{city}}", key:"1", base:25000, mul:1.6, desc:"+200.000 de población máxima y crece más rápido. Da empleo e impulsa los mercados cercanos.", where:"Cualquier terreno propio."},
   temple:{cat:"pop", n:"Templo", e:"{{temple}}", key:"g", base:35000, mul:1.5, max:4, desc:"+4 de felicidad por nivel (hasta +15 en total): puedes subir los impuestos sin provocar revueltas.", where:"Cualquier terreno propio. Máx. 4."},
   barracks:{cat:"pop", n:"Cuartel", e:"{{barracks}}", key:"h", base:40000, mul:1.5, max:4, desc:"+100.000 de población máxima por nivel, tropas que crecen más rápido y permite RECLUTAR: paga oro y consigue tropas al instante.", where:"Cualquier terreno propio. Máx. 4."},
@@ -44,6 +46,19 @@ const WEAP = {
   atom:   {n:"Atómica", e:"{{atom}}", key:"9", cost:1500000, r:16, neutral:true,  kill:2,   desc:"Arrasa un radio de 16 y deja radiación 3 minutos."},
   hydro:  {n:"Bomba H", e:"{{hydro}}", key:"0", cost:4500000, r:32, neutral:true,  kill:2.5, desc:"Arrasa un radio de 32; difícil de derribar."},
 };
+// Investigación: lo que está aquí no se puede construir/lanzar hasta investigarlo (puntos de investigación = cost).
+// Cada universidad terminada aporta 1 punto/s por nivel, así que con N universidades tardas N veces menos.
+const RESEARCH: any = {
+  mint:      {n:"Acuñación",           e:"{{mint}}",       cost:100,  desc:"Permite construir Casas de la moneda."},
+  tradehouse:{n:"Comercio exterior",   e:"{{tradehouse}}", cost:100,  desc:"Permite construir Casas de comercio."},
+  sam:       {n:"Defensa antiaérea",   e:"{{sam}}",        cost:200,  desc:"Permite construir Antiaéreas."},
+  airport:   {n:"Aviación",            e:"{{airport}}",    cost:300,  desc:"Permite construir Aeropuertos, aviones comerciales y de guerra."},
+  silo:      {n:"Misiles",             e:"{{silo}}",       cost:300,  desc:"Permite construir Silos y lanzar misiles."},
+  atom:      {n:"Fisión nuclear",      e:"{{atom}}",       cost:600,  req:"silo", desc:"Permite lanzar la bomba atómica."},
+  hydro:     {n:"Fusión nuclear",      e:"{{hydro}}",      cost:1200, req:"atom", desc:"Permite lanzar la bomba H."},
+};
+const RP_PER_SEC = 1; // puntos por segundo y por nivel de universidad terminada
+
 // Posturas de combate: cambian la velocidad de avance, las bajas al atacar y lo difícil que eres de conquistar
 const STANCE = {
   bal:{n:"Equilibrada", e:"{{stance_bal}}", key:"j", att:1,   cost:1,   def:1,   desc:"Sin bonos ni penalizaciones."},
