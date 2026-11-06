@@ -81,7 +81,7 @@ function openOwnBuilding(i){
   const extra=b.t==="barracks"?[[`{{recruit}} Reclutar · ${fmt(RECRUIT_COST*b.lvl)}`,()=>{ const why=recruit(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("good"); log("{{recruit}} Nuevas tropas reclutadas.","good"); } }]]:[];
   if(b.lvl>=MAX_LVL){ showProp(`${head}<br>Está al nivel máximo.`,extra.concat([["Cerrar",null]])); return; }
   const c=upCost(b);
-  showProp(`${head}<br>Mejorar a nivel ${b.lvl+1} cuesta <b>${fmt(c)}</b> {{gold}}: ${UP_DESC[b.t]}.`,
+  showProp(`${head}<br>Mejorar a nivel ${b.lvl+1} cuesta <b>${fmt(c)}</b> {{gold}} y ${Object.entries(upMat(b)).map(([r,n])=>r+" "+n).join(", ")}: ${UP_DESC[b.t]}.`,
     [[`{{up}} Mejorar · ${fmt(c)}`,()=>{ const why=upgradeBuilding(me,b); if(why){ log(why,"bad"); sfx("err"); } else { log(`{{up}} ${BT[b.t].n} mejorada a nivel ${b.lvl}.`,"good"); sfx("build"); } }]].concat(extra,[["Cerrar",null]]));
 }
 function attackAt(i){
@@ -117,10 +117,10 @@ function mkCard(parent,id,e,label,key,title,onclick,cls,info){ const b=document.
   b.innerHTML=`<kbd>${key}</kbd><span class="em">${e}</span><span class="lb">${label}</span><span class="co" id="${id}_c"></span>`;
   b.onclick=()=>{ onclick(); if(info) showInfo(info); }; if(info){ b.onmouseenter=()=>showInfo(info); b.onfocus=()=>showInfo(info); b.onmouseleave=()=>showInfo(null); }
   parent.appendChild(b); }
-const infoBT=t=>()=>{ const d=BT[t]; return `<span><b>${d.e} ${d.n}</b> · <span class="co">${fmt(bCost(me,t))} {{gold}}</span> — ${d.desc} <span class="mut">${d.where}${matText(t)}${d.max?"":""}</span></span>`; };
+const infoBT=t=>()=>{ const d=BT[t]; return `<span><b>${d.e} ${d.n}</b> · <span class="co">${fmt(bCost(me,t))} {{gold}}</span> — ${d.desc} <span class="mut">${d.where}${matText(t,me)}${d.max?"":""}</span></span>`; };
 const infoW=t=>()=>{ const d=WEAP[t]; return `<span><b>${d.e} ${d.n}</b> · ${fmt(d.cost)} {{gold}} — ${d.desc} <span class="mut">Necesita un Silo terminado. Elige el objetivo en el mapa (radio ${d.r}).</span></span>`; };
 const infoText=(e,n,txt,extra)=>()=>`<span><b>${e} ${n}</b> — ${txt} <span class="mut">${extra||""}</span></span>`;
-for(const t in BT) mkCard(paneOf[BT[t].cat],"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+" "+BT[t].where+matText(t),()=>{ setCat(BT[t].cat); toggleMode({k:"build",t}); },"",infoBT(t));
+for(const t in BT) mkCard(paneOf[BT[t].cat],"b_"+t,BT[t].e,BT[t].n,BT[t].key,BT[t].desc+" "+BT[t].where+matText(t,me),()=>{ setCat(BT[t].cat); toggleMode({k:"build",t}); },"",infoBT(t));
 // ---- Investigación (pestaña Ciencia)
 const infoR=t=>()=>{ const R=RESEARCH[t], r=me.res, why=researchAvail(me,t), rate=rpRate(me);
   const st=r.done[t]?"Investigado.":r.cur===t?`En curso: ${Math.floor(r.prog)} / ${R.cost} puntos`+(rate>0?` · quedan ${fmtTime((R.cost-r.prog)/rate)}`:""):why?why:`Cuesta ${R.cost} puntos`+(rate>0?` · ${fmtTime(R.cost/rate)} con tus universidades`:" · construye una Universidad");
@@ -139,7 +139,7 @@ mkCard(paneOf.arm,"w_plane","{{wplane}}","Avión de guerra","V","Avión de guerr
   infoText("{{wplane}}","Avión de guerra","patrulla desde tu aeropuerto y derriba los aviones comerciales de reinos sin pacto contigo.","Necesita un Aeropuerto terminado."));
 refreshInfo();
 // ---- Órdenes de tropas
-const infoRecruit=()=>{ const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1; return `<span><b>{{recruit}} Reclutar</b> · <span class="co">${fmt(RECRUIT_COST*lv)} {{gold}}</span> — consigues <b>${fmt(RECRUIT_TROOPS*lv)}</b> tropas al instante. <span class="mut">Necesita un Cuartel terminado; cada cuartel descansa 25 s. Un cuartel de más nivel recluta más.</span></span>`; };
+const infoRecruit=()=>{ const ri=recruitInfo(me), lv=ri.free?ri.free.lvl||1:ri.best?ri.best.lvl||1:1; return `<span><b>{{recruit}} Reclutar</b> · <span class="co">${fmt(RECRUIT_COST*lv)} {{gold}}</span> y <b>${RECRUIT_FOOD*lv} comida + ${RECRUIT_IRON*lv} hierro</b> — consigues <b>${fmt(RECRUIT_TROOPS*lv)}</b> tropas al instante. <span class="mut">Necesita un Cuartel terminado; cada cuartel descansa 25 s. Un cuartel de más nivel recluta más.</span></span>`; };
 mkCard(paneOf.tro,"t_recruit","{{recruit}}","Reclutar","u","Gasta oro y consigue tropas al instante (necesita Cuartel)",()=>{ const why=recruit(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("good"); log("{{recruit}} Nuevas tropas reclutadas.","good"); } },"tro",infoRecruit);
 mkCard(paneOf.tro,"t_recall","{{retreat}}","Retirar","n","Retira las tropas de todos los frentes abiertos a tu reserva",()=>recallAll(),"tro",
   infoText("{{retreat}}","Retirar todo","las tropas que aún no han combatido en tus frentes vuelven a la reserva.","Para retirar un solo frente usa ↩ en el panel de frentes (arriba a la izquierda)."));
@@ -306,7 +306,7 @@ function updateHud(){
     m.style.width=h+"%"; m.style.background=col; document.getElementById("hapV").textContent=h;
     document.getElementById("hapE").textContent=h>=75?"{{f1}}":h>=55?"{{f2}}":h>=40?"{{f3}}":h>=25?"{{f4}}":"{{f5}}"; }
   { const t=matTotals(me); document.getElementById("mats").textContent=RES.map(r=>RES_E[r]+" "+fmt(t[r])).join("   "); }
-  document.getElementById("hGrow").textContent="+"+fmt(st.grow)+"/s";
+  document.getElementById("hGrow").textContent="+"+fmt(st.grow)+"/s · {{comida}}"+(st.food.make>=st.food.use?"+":"")+(st.food.make-st.food.use).toFixed(1)+"/s"+(me.hunger?" ¡HAMBRE!":"");
   document.getElementById("hGold").textContent=fmt(me.gold);
   document.getElementById("hInc").textContent="+"+fmt(st.inc)+"/s"+(st.tr?` · {{trade}}${st.tr}`:"")+(st.net.mines+st.net.cities+st.net.ports?` · {{station}}${st.net.mines+st.net.cities+st.net.ports}`:"");
   document.getElementById("hLand").textContent=(me.tiles/landTotal*100).toFixed(2)+"%";

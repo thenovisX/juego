@@ -14,6 +14,8 @@ let spot = -1; for (let i = (g.terrain.length / 3) | 0; i < g.terrain.length; i+
 g.spawnAt(me, spot % 2000, (spot / 2000) | 0, 12);
 me.gold = 1e12;
 const T = g.tilesOf[me.id];
+// banco con materiales para pagar las mejoras
+let bSpot = T.find(i => !g.canBuild(me, "bank", i)); g.placeBuilding(me, "bank", bSpot, true); g.buildings[g.buildings.length - 1].store = { piedra: 500, madera: 500, hierro: 500, comida: 500 };
 const free = type => T.find(i => !g.canBuild(me, type, i));
 
 // granja (llanura): da oro
