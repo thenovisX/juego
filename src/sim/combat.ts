@@ -76,7 +76,8 @@ function launchAttack(att,def,troops,cands){
   return true;
 }
 // Anexión: un territorio enemigo que queda rodeado solo por casillas tuyas (sin mar ni otros reinos) pasa a ti sin bajas.
-const annexSeen = new Uint32Array(N); let annexStamp=0; const NBA=[0,0,0,0];
+let annexSeen = new Uint32Array(0); let annexStamp=0; // se reserva en allocWorld() con el tamaño del mapa elegido
+const NBA=[0,0,0,0];
 function annexPockets(att,def,conq){
   annexStamp++; let budget=4000;
   for(const c of conq){ nbs(c,NBA); const seeds=[NBA[0],NBA[1],NBA[2],NBA[3]];

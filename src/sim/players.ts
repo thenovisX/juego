@@ -96,6 +96,21 @@ function refreshEff(){
   }
 }
 function coastal(i){ nbs(i,NB); for(const j of NB) if(j>=0 && !terrain[j]) return true; return false; }
+// Puerto "imán": si pulsas cerca de la costa, se coloca solo en la casilla de costa propia más cercana (radio PORT_SNAP)
+// donde se pueda construir. Devuelve esa casilla o -1 si no hay ninguna.
+const PORT_SNAP=12;
+function snapPort(p,i){
+  if(i<0) return -1;
+  const x=i%W, y=(i/W)|0; let best=-1, bd=1e9;
+  for(let dy=-PORT_SNAP;dy<=PORT_SNAP;dy++){ const yy=y+dy; if(yy<0||yy>=H) continue;
+    for(let dx=-PORT_SNAP;dx<=PORT_SNAP;dx++){ const d=dx*dx+dy*dy; if(d>=bd||d>PORT_SNAP*PORT_SNAP) continue;
+      const xx=x+dx; if(!WRAP&&(xx<0||xx>=W)) continue;
+      const j=yy*W+((xx%W)+W)%W;
+      if(!terrain[j]||owner[j]!==p.id||!coastal(j)) continue;
+      { const why=canBuild(p,"port",j); if(why && !/oro/.test(why)) continue; } // solo se descarta por sitio; la falta de oro se avisa luego
+      best=j; bd=d; } }
+  return best;
+}
 function canBuild(p,t,i){
   if(owner[i]!==p.id) return "Solo puedes construir en tu territorio.";
   if(bldAt[i]>=0) return "Ya hay un edificio ahí.";

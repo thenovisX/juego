@@ -5,7 +5,9 @@ vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + "\nsetupWorld();\nthis.
 const g = ctx.__a; g.setupWorld(); g.newGame("T", 45, 1); g.spawned = true;
 let seen = 0, onLand = 0;
 for (let i = 0; i < 6000; i++) { g.gameTick();
-  for (const s of [...g.tships, ...g.wships]) { seen++; if (!g.isWater(s.x, s.y)) onLand++; }
+  for (const s of g.wships) { seen++; if (!g.isWater(s.x, s.y)) onLand++; }
+  // los cargueros salen y llegan a la casilla del puerto (tierra): solo cuenta pisar tierra a mitad de ruta
+  for (const s of g.tships) { seen++; if (!g.isWater(s.x, s.y) && s.pi > 1 && s.pi < s.path.length - 1) onLand++; }
   for (const b of g.boats) { seen++; if (!g.isWater(b.x, b.y) && b.pi > 1 && b.pi < b.path.length - 1) onLand++; } }
 console.log(`posiciones de barcos observadas=${seen}, sobre tierra=${onLand}`);
 if (!seen || onLand) { console.error("FALLO"); process.exit(1); }

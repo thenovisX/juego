@@ -29,7 +29,8 @@ document.getElementById("home").onclick=()=>{ if(me&&me.tiles) centerOn(me.sumX/
 
 const tip=document.getElementById("tip");
 function updateTip(sx,sy){
-  const i=screenToTile(sx,sy); if(i<0||!started){ tip.hidden=true; return; }
+  let i=screenToTile(sx,sy); if(i<0||!started){ tip.hidden=true; return; }
+  if(mode && spawned && mode.k==="build" && mode.t==="port"){ const j=snapPort(me,i); if(j>=0) i=j; }
   const t=terrain[i]; let s=TER[t].e+" "+TER[t].n;
   if(t){ const o=owner[i], rl=o>=0?relLabel(me.id,o).join(""):"";
     s+=" · "+(o<0?"Tierra libre":players[o].name+(rl?" "+rl:""));
@@ -54,7 +55,7 @@ function handleClick(i){
   }
   if(!me.alive) return;
   if(mode){
-    if(mode.k==="build"){ const why=canBuild(me,mode.t,i); if(why){ log(why,"bad"); sfx("err"); return; }
+    if(mode.k==="build"){ if(mode.t==="port"){ const j=snapPort(me,i); if(j>=0) i=j; } const why=canBuild(me,mode.t,i); if(why){ log(why,"bad"); sfx("err"); return; }
       placeBuilding(me,mode.t,i,false); sfx("build"); { const nb=buildings[buildings.length-1]; log(nb.need?`{{obra}} ${BT[mode.t].n}: esperando materiales (${Object.entries(nb.need).map(([r,n])=>r+" "+n).join(", ")}). ${matDiagnose(nb)}`:`${BT[mode.t].e} ${BT[mode.t].n} en construcción (5 s).`); } if(!shiftHeld) setMode(null); return; }
     if(mode.k==="weap"){ const t=mode.t, why=launchMissile(me,t,i); if(why){ log(why,"bad"); sfx("err"); return; } sfx("launch"); log(`${WEAP[t].e} ${WEAP[t].n} lanzado.`); if(!shiftHeld) setMode(null); return; }
     if(mode.k==="dip"){ openDipAt(i); setMode(null); return; }
