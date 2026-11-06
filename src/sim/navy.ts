@@ -5,7 +5,7 @@ const WSHIP_COST=150*GOLD_X, WSHIP_MAX=3, WSHIP_SPEED=0.5, WSHIP_ZONE=40, WSHIP_
 // Balas de cañón (solo visuales): salen del buque y vuelan hasta su objetivo
 let shots: any[]=[];
 let wships: any[]=[];
-const isWater=(x:number,y:number)=>{ const yy=Math.floor(y); if(yy<0||yy>=H) return false; return !terrain[yy*W+((Math.floor(x)%W)+W)%W]; };
+const isWater=(x:number,y:number)=>{ const yy=Math.floor(y); if(yy<0||yy>=H) return false; const xx=Math.floor(x); if(!WRAP&&(xx<0||xx>=W)) return false; return !terrain[yy*W+((xx%W)+W)%W]; };
 function buyWarship(p){
   const ports=readyPorts(p); if(!ports.length) return "Necesitas un puerto terminado.";
   if(wships.filter(w=>w.owner===p.id).length>=WSHIP_MAX) return `Máximo ${WSHIP_MAX} buques de guerra.`;
@@ -24,7 +24,7 @@ function setPatrol(w:any,x:number,y:number): string|null{
 }
 // Ruta por mar con giros de 90° (BFS = la más corta) de (x0,y0) a (x1,y1); null si no hay camino.
 function seaRoute(x0:number,y0:number,x1:number,y1:number): number[][]|null{
-  const wrap=(x:number)=>((Math.floor(x)%W)+W)%W, s0=Math.floor(y0)*W+wrap(x0), g=Math.floor(y1)*W+wrap(x1);
+  const wrap=(x:number)=>wrapX(Math.floor(x)), s0=Math.floor(y0)*W+wrap(x0), g=Math.floor(y1)*W+wrap(x1);
   if(s0===g) return [[x1,y1]];
   if(terrain[s0]||terrain[g]) return null;
   const tiles=seaTiles([s0],[g]); return tiles?straighten(tiles):null;

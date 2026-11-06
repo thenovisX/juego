@@ -40,6 +40,8 @@ function netInstall(){
   netWrap("reinforceAttack", a=>{ netCmd("reinf",a[1],a[2]); const x=attacks.find((q:any)=>q.att===netMe&&q.def===a[1]); return x?Math.floor(players[netMe].troops*a[2]):0; });
   netWrap("setStance", a=>{ netCmd("stance",a[1]); });
   netWrap("setTax", a=>{ netCmd("tax",a[1]); });
+  netWrap("adoptIdea", a=>{ netCmd("idea",a[1]); return null; });
+  netWrap("resolveEvent", a=>{ netCmd("evt",a[1]); return null; });
   netWrap("recruit", ()=>{ netCmd("recruit"); return null; });
   netWrap("sendReinforcements", a=>{ netCmd("rally",a[1],a[2]); return Math.floor(players[netMe].troops*a[2]); });
   netWrap("breakPacts", a=>{ netCmd("break",a[1]); });
@@ -94,7 +96,7 @@ function netAdvance(max:number){
 // Huella del estado para detectar desincronizaciones (la compara el servidor).
 function netChecksum(): number{
   let h=2166136261>>>0; const mix=(v:number)=>{ h=Math.imul(h^(v|0),16777619)>>>0; };
-  for(const p of players){ mix(p.gear?p.gear.tank*7+p.gear.arty:0); mix(p.tiles); mix(Math.floor(p.troops)); mix(Math.floor(p.gold)); mix(p.alive?1:0); }
+  for(const p of players){ mix(p.gear?p.gear.tank*7+p.gear.arty:0); mix(p.tiles); mix(Math.floor(p.troops)); mix(Math.floor(p.gold)); mix(p.alive?1:0); mix(Math.floor(p.pow||0)); mix(Math.floor((p.infamy||0)*10)); }
   for(let i=0;i<N;i+=97) mix(owner[i]);
   mix(buildings.length); mix(attacks.length); mix(boats.length); mix(missiles.length);
   return h;
@@ -121,6 +123,8 @@ function netExec(slot:number, c:any){
     case "reinf": if(isInt(c[1],-1,P-1) && isNum(c[2],0.01,1)) reinforceAttack(p,c[1],c[2]); break;
     case "stance": if(typeof c[1]==="string" && STANCE[c[1]]) setStance(p,c[1]); break;
     case "tax": if(isInt(c[1],0,80)) p.tax=c[1]; break;
+    case "idea": if(typeof c[1]==="string" && IDEAS[c[1]]) why=adoptIdea(p,c[1]); break;
+    case "evt": if(isInt(c[1],0,1)) why=resolveEvent(p,c[1]); break;
     case "recruit": why=recruit(p); break;
     case "rally": if(alive(c[1]) && isNum(c[2],0.01,1)){ const r=sendReinforcements(slot,c[1],c[2]); if(typeof r==="string") why=r; } break;
     case "break": if(alive(c[1])) breakPacts(slot,c[1]); break;

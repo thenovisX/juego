@@ -12,7 +12,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 function makeClient(name) {
   const ctx = vm.createContext({ console, performance, atob, Math, setTimeout });
-  vm.runInContext(code + `\nthis.__api={ setupWorld, Hooks, netBegin, netOnMessage, netAdvance, netChecksum, players, owner, buildings, attacks, rels, tilesOf, bldAt, N,
+  vm.runInContext(code + `\nsetupWorld();\nthis.__api={ setupWorld, Hooks, netBegin, netOnMessage, netAdvance, netChecksum, players, owner, buildings, attacks, rels, tilesOf, bldAt, N,
     get tick(){return tick}, get me(){return me}, set netSend(f){ netSend=f },
     placeBuilding:(...a)=>placeBuilding(...a), launchAttack:(...a)=>launchAttack(...a), borderCandidates:(...a)=>borderCandidates(...a), propose:(...a)=>propose(...a),
     signPact:(...a)=>signPact(...a), setTax:(...a)=>setTax(...a), canBuild:(...a)=>canBuild(...a), stats:(...a)=>stats(...a), setStance:(...a)=>setStance(...a) }; // por nombre, como la interfaz (así pasan por las funciones interceptadas)`, ctx);

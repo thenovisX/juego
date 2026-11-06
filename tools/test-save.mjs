@@ -4,6 +4,7 @@ import fs from "node:fs";
 import vm from "node:vm";
 const ctx = vm.createContext({ console, performance, atob, Math, setTimeout, Blob: class {}, URL });
 vm.runInContext(fs.readFileSync("dist/sim.js", "utf8") + `
+setupWorld();
 this.__s = { setupWorld, newGame, gameTick, saveGame, loadGame, get players(){ return players; }, get buildings(){ return buildings; },
   get attacks(){ return attacks; }, get tships(){ return tships; }, get planes(){ return planes; }, owner, fallout, rels, set spawned(v){ spawned = v; }, get tick(){ return tick; }, get me(){ return me; } };`, ctx);
 const g = ctx.__s;

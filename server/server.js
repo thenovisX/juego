@@ -147,7 +147,7 @@ function createServer() {
       case "settings": {
         if (!r || r.state !== "lobby" || r.host !== c) return;
         const s = r.settings, bots = Number(m.bots), diff = Number(m.diff);
-        if (Number.isInteger(bots) && bots >= 0 && bots <= 70) s.bots = bots;
+        if (Number.isInteger(bots) && bots >= 0 && bots <= 150) s.bots = bots;
         if ([0.7, 1, 1.35].includes(diff)) s.diff = diff;
         if (typeof m.map === "string") s.map = clean(m.map, 24) || "tierra";
         pushRoom(r); break;

@@ -10,7 +10,7 @@ function sampleNeighbors(p,count){
 }
 // Coloca un edificio cerca de otro (p. ej. una estación junto a una mina)
 function placeNear(p,t,anchor,r){
-  for(let k=0;k<14;k++){ const x=((anchor.x+((rnd()*2-1)*r|0))%W+W)%W, y=Math.max(0,Math.min(H-1,anchor.y+((rnd()*2-1)*r|0))), i=y*W+x;
+  for(let k=0;k<14;k++){ const x=wrapX(anchor.x+((rnd()*2-1)*r|0)), y=Math.max(0,Math.min(H-1,anchor.y+((rnd()*2-1)*r|0))), i=y*W+x;
     if(terrain[i] && !canBuild(p,t,i)){ placeBuilding(p,t,i,false); return true; } }
   return false;
 }
@@ -104,12 +104,12 @@ function botThink(p){
   if(s.neutral>0 && rnd()<0.85){ launchAttack(p.id,-1,p.troops*(0.25+rnd()*0.2),borderCandidates(p.id,-1)); return; }
   let target=-1, best=-1e9;
   for(const [o,cnt] of s.enemies){ if(peaceful(p.id,o)) continue; const e=players[o], ratio=p.troops/Math.max(1,e.troops);
-    const score=ratio*2+cnt*0.02+(o===p.rival?1:0)+(!players[o].isBot?0.3*diff:0)-op(p.id,o)/40;
+    const score=ratio*2+cnt*0.02+(o===p.rival?1:0)+(!players[o].isBot?0.3*diff:0)+((e.infamy||0)>=INFAMY_COALITION?1.5:0)-op(p.id,o)/40;
     if(ratio<0.9) continue; if(score>best){best=score;target=o;} }
   if(target>=0){ p.rival=target; launchAttack(p.id,target,p.troops*Math.max(0.3,Math.min(0.75,0.3+0.2*Math.log(Math.max(1,p.troops/Math.max(1,players[target].troops))))),borderCandidates(p.id,target)); return; }
   if(s.neutral===0 && !s.enemies.size && p.B.port.some(b=>b.done<=tick) && rnd()<0.4){
     const src=p.B.port[0];
-    for(let k=0;k<40;k++){ const x=((src.x+((rnd()*2-1)*220|0))%W+W)%W, y=Math.max(0,Math.min(H-1,src.y+((rnd()*2-1)*140|0))), i=y*W+x;
+    for(let k=0;k<40;k++){ const x=wrapX(src.x+((rnd()*2-1)*220*Math.max(1,TS)|0)), y=Math.max(0,Math.min(H-1,src.y+((rnd()*2-1)*140*Math.max(1,TS)|0))), i=y*W+x;
       if(terrain[i] && owner[i]!==p.id && (owner[i]<0 || (!peaceful(p.id,owner[i]) && players[owner[i]].troops<p.troops*0.5))){ sendBoat(p,i,p.troops*0.35); break; } }
   }
 }

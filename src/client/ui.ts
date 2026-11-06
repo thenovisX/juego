@@ -130,6 +130,11 @@ for(const t in RESEARCH){ mkCard(paneOf.sci,"r_"+t,RESEARCH[t].e,RESEARCH[t].n,"
 const infoG=t=>()=>{ const G=GEAR[t], n=me.gear[t], cap=gearCap(me), why=gearWhy(me,t);
   return `<span><b>${G.e} ${G.n}</b> · <span class="co">${fmt(G.gold)} {{gold}}</span> — ${G.desc} <span class="mut">Materiales: ${Object.entries(G.mat).map(([r,q])=>RES_E[r]+" "+q).join(" ")}. Tienes ${n} / ${cap}. ${why&&n<cap?why:""}</span></span>`; };
 for(const t in GEAR){ mkCard(paneOf.arm,"g_"+t,GEAR[t].e,GEAR[t].n,"","Fabricar: "+GEAR[t].desc,()=>{ const why=buyGear(me,t); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); log(`${GEAR[t].e} ${GEAR[t].n} fabricado.`,"good"); } },"weap",infoG(t)); document.querySelector("#g_"+t+" kbd").remove(); }
+// ---- Tradiciones (pestaña Nación)
+const infoI=k=>()=>{ const I=IDEAS[k], c=ideaCost(me), has=hasIdea(me,k);
+  return `<span><b>${I.e} ${I.n}</b> — ${I.desc} <span class="mut">${has?"Ya la tienes.":`Cuesta ${c} de autoridad (tienes ${Math.floor(me.pow||0)}, +${powRate(me).toFixed(1)}/s). Cada tradición nueva cuesta ${IDEA_STEP} más. La autoridad la dan las ciudades y universidades.`}</span></span>`; };
+for(const k in IDEAS) mkCard(paneOf.nat,"i_"+k,IDEAS[k].e,IDEAS[k].n,"","Tradición: "+IDEAS[k].desc,()=>{ const why=adoptIdea(me,k); if(why){ log(why,"bad"); sfx("err"); } else sfx("build"); },"res",infoI(k));
+for(const k in IDEAS) document.querySelector("#i_"+k+" kbd").remove();
 for(const t in WEAP) mkCard(paneOf.arm,"w_"+t,WEAP[t].e,WEAP[t].n,WEAP[t].key,WEAP[t].desc,()=>toggleMode({k:"weap",t}),"weap",infoW(t));
 mkCard(paneOf.arm,"w_ship","{{wship}}","Buque","B","Buque de guerra: patrulla desde tu puerto, intercepta cargueros enemigos y se queda su oro",()=>{ const why=buyWarship(me); if(why){ log(why,"bad"); sfx("err"); } else { sfx("build"); selShip=wships.filter(w=>w.owner===me.id).pop(); setMode({k:"patrol"}); log("{{wship}} Buque de guerra botado. Toca el punto del mar donde quieres que patrulle: se quedará por esa zona y cañoneará a los cargueros enemigos que entren."); } },"weap",
   infoText("{{wship}}","Buque de guerra","patrulla una zona del mar y se queda con la carga de los cargueros ajenos (salvo socios y aliados).","Necesita un Puerto terminado."));
@@ -220,6 +225,11 @@ function offerToPlayer(from,type){
     ["Rechazar",()=>addOp(from,me.id,-8)]], tick+200);
 }
 
+let evtShown=-1;
+function showEvent(){
+  const E=EVENTS.find(x=>x.id===me.evt.id); if(!E) return; evtShown=me.evt.at;
+  showProp(`${E.e} <b>${E.n}.</b> ${E.d}`,E.o.map(([label,res],k)=>[`${label} (${res})`,()=>resolveEvent(me,k)]),me.evt.at+EVENT_WAIT);
+}
 const dipEl=document.getElementById("dip"); let dipFor=-1;
 function openDipAt(i){ if(i<0||!spawned) return; const o=owner[i]; if(o===me.id){ log("Ese es tu propio reino."); return; } if(o<0) return; openDip(o); }
 function openDip(o){ dipFor=o; renderDip(); dipEl.hidden=false; }
@@ -233,6 +243,8 @@ function renderDip(){
   if(r.ally) chips.push(`<span class="chip g">{{ally}} Aliados</span>`);
   else if(r.nap>tick) chips.push(`<span class="chip g">{{nap}} No agresión · ${Math.ceil((r.nap-tick)/10)} s</span>`);
   if(r.trade) chips.push(`<span class="chip g">{{trade}} Comercio</span>`);
+  if(hasCB(me.id,dipFor)) chips.push(`<span class="chip g">{{shield}} Casus belli</span>`); else chips.push(`<span class="chip">{{warn}} Sin casus belli: atacarle da infamia</span>`);
+  if((p.infamy||0)>=INFAMY_COALITION) chips.push(`<span class="chip r">{{warn}} Agresor infame</span>`);
   if(attacks.some(a=>a.att===dipFor&&a.def===me.id)) chips.push(`<span class="chip r">{{attack}} Te está atacando</span>`);
   if(p.traitorUntil>tick) chips.push(`<span class="chip r">{{traitor}} Traidor${p.betrayals>1?" x"+p.betrayals:""}</span>`);
   const pct=Math.round(ratio*100), siloOk=me.B.silo.some(b=>b.done<=tick), mil=[], trd=[];
@@ -306,6 +318,10 @@ function updateHud(){
     m.style.width=h+"%"; m.style.background=col; document.getElementById("hapV").textContent=h;
     document.getElementById("hapE").textContent=h>=75?"{{f1}}":h>=55?"{{f2}}":h>=40?"{{f3}}":h>=25?"{{f4}}":"{{f5}}"; }
   { const t=matTotals(me); document.getElementById("mats").textContent=RES.map(r=>RES_E[r]+" "+fmt(t[r])).join("   "); }
+  { const inf=Math.round(me.infamy||0), c=ideaCost(me);
+    document.getElementById("nation").innerHTML=`{{crown}} ${Math.floor(me.pow||0)} <small>+${powRate(me).toFixed(1)}/s</small>`+(ideaCount(me)<IDEAS_N?` · tradición: ${c}`:"")+(inf>0?` · <span style="color:${inf>=INFAMY_COALITION?"#e8584a":"#e0b158"}">{{warn}} infamia ${inf}</span>`:"");
+    for(const k in IDEAS){ const el=document.getElementById("i_"+k), has=hasIdea(me,k); el.classList.toggle("on",has); document.getElementById("i_"+k+"_c").textContent=has?"✔":c; el.disabled=has||(me.pow||0)<c||!me.alive; } }
+  if(me.evt && !propOpen && me.evt.at!==evtShown) showEvent();
   document.getElementById("hGrow").textContent="+"+fmt(st.grow)+"/s · {{comida}}"+(st.food.make>=st.food.use?"+":"")+(st.food.make-st.food.use).toFixed(1)+"/s"+(me.hunger?" ¡HAMBRE!":"");
   document.getElementById("hGold").textContent=fmt(me.gold);
   document.getElementById("hInc").textContent="+"+fmt(st.inc)+"/s"+(st.tr?` · {{trade}}${st.tr}`:"")+(st.net.mines+st.net.cities+st.net.ports?` · {{station}}${st.net.mines+st.net.cities+st.net.ports}`:"");
@@ -357,6 +373,7 @@ function showHelp(){
   <p><b>{{gold}} Ganar oro:</b> la base son los <b>impuestos</b> (deslizador). Encima: {{sawmill}} aserraderos, {{farm}} granjas y {{foundry}} metalúrgicas; {{market}} <b>mercados</b> junto a ciudades; {{mint}} <b>casas de la moneda</b> junto a minas; {{tradehouse}} <b>casas de comercio</b> por cada socio comercial. El oro NO depende de cuánta población tengas.</p>
   <p><b>Felicidad:</b> más impuestos = pueblo descontento. Los {{temple}} templos la suben para que puedas cobrar más sin revueltas.</p>
   <p><b>{{science}} Ciencia:</b> construye {{university}} <b>Universidades</b> (pestaña Ciencia): cada una da 1 punto de investigación por segundo. Con ellos investigas, de una en una, lo que desbloquea Casas de la moneda, Casas de comercio, Antiaéreas, Aeropuertos, Silos y las bombas atómica y H. Cuantas más universidades tengas, antes lo desbloqueas.</p>
+  <p><b>{{crown}} Nación:</b> tus ciudades y universidades generan <b>Autoridad</b>, que se gasta en <b>tradiciones</b> (bonos permanentes, pestaña Nación). Atacar a un reino sin <b>casus belli</b> (que él te haya atacado hace poco, sea un traidor o un agresor infame) te da <b>infamia</b>: el pueblo se inquieta y los reinos desconfían. Cada pocos minutos ocurre un <b>evento</b> en tu reino y decides qué hacer.</p>
   <p><b>Bombardear:</b> con un {{silo}} Silo terminado se desbloquean misil, atómica y bomba H (8, 9, 0). Las {{sam}} Antiaéreas las derriban.</p>
   <p><b>Clic derecho</b> (o pulsación larga) sobre un reino: atacar, enviar barco, lanzar misil/bomba, pactos, comercio y refuerzos a aliados.</p>
   <p><b>Comercio:</b> con acuerdo comercial y {{port}} puertos puedes enviar {{cargo}} cargueros que dan oro. Las {{station}} Estaciones (a menos de 40 una de otra) conectan minas, ciudades y puertos cercanos (radio 14): +50% de producción y exportación.</p>
@@ -421,6 +438,8 @@ function loadFromFile(file){
   const rd=new FileReader();
   rd.onload=()=>{
     let data; try{ data=JSON.parse(rd.result); }catch(e){ alert("El archivo no es una partida válida."); return; }
+    const wantMap=data&&data.game==="hegemonia"?(data.map||"tierra"):MAPID;
+    if(wantMap!==MAPID&&mapList().some(m=>m.id===wantMap)) applyMap(wantMap); // la partida guardada es de otro mapa: se genera primero
     const why=loadGame(data); if(why){ alert(why); return; }
     setMode(null); closeDip(); closeProp(); flushPixels(true);
     document.getElementById("overlay").hidden=true;

@@ -3,7 +3,7 @@
 // Todo vive en este archivo (crea su propio botón y su propia pantalla) para no depender del HTML del menú.
 // La lógica de la partida en red está en src/sim/net.ts; el servidor, en server/server.js.
 const MP_DEFAULT_SERVER = ""; // p. ej. "wss://juego.midominio.com". Vacío = el mismo sitio desde el que se cargó el juego.
-const MP_MAPS = [["tierra", "La Tierra"]]; // otros mapas: añadir aquí [id, nombre] cuando existan (el id viaja en la sala)
+const MP_MAPS = mapList().map(m => [m.id, m.name]); // todos los mapas de MAPDATA (el id viaja en la sala y en "start")
 
 (function multiplayerUI(){
   const $ = id => document.getElementById(id);
@@ -64,6 +64,7 @@ const MP_MAPS = [["tierra", "La Tierra"]]; // otros mapas: añadir aquí [id, no
   function begin(m) {
     initAudio();
     netSend = x => tx(x);
+    { const mid = m.map || "tierra"; if (mid !== MAPID || players.length) applyMap(mid); } // todos generan el mismo mapa (es determinista)
     netBegin(m);
     ov.hidden = true; $("overlay").hidden = true;
     for (const id of ["top", "board", "dock", "side", "send"]) { const e = $(id); if (e) e.hidden = false; }
@@ -99,7 +100,7 @@ const MP_MAPS = [["tierra", "La Tierra"]]; // otros mapas: añadir aquí [id, no
         if (i === room.host) li.append(el("em", { textContent: "anfitrión" })); ol.append(li); });
       box.append(ol);
       const s = room.settings, bots = el("select", { disabled: !host }), diff = el("select", { disabled: !host }), map = el("select", { disabled: !host || MP_MAPS.length < 2 });
-      for (const n of [0, 10, 25, 45, 70]) bots.append(new Option(n + " reinos", n, false, n === s.bots));
+      for (const n of [0, 10, 25, 45, 70, 100, 150]) bots.append(new Option(n + " reinos", n, false, n === s.bots));
       for (const [v, n] of [[0.7, "Fácil"], [1, "Normal"], [1.35, "Difícil"]]) diff.append(new Option(n, v, false, v === s.diff));
       for (const [v, n] of MP_MAPS) map.append(new Option(n, v, false, v === s.map));
       const push = () => tx({ t: "settings", bots: +bots.value, diff: +diff.value, map: map.value });

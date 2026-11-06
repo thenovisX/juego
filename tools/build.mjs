@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 const require = createRequire(import.meta.url + "/../build/");
 const esbuild = require("esbuild");
 
-const SIM = ["mapdata", "hooks", "util", "map", "state", "players", "combat", "upgrade", "research", "tax", "material", "gear", "trade", "navy", "air", "ai", "loop", "save", "setup", "net"].map(f => `src/sim/${f}.ts`);
+const SIM = ["mapdata", "hooks", "util", "map", "state", "players", "combat", "upgrade", "research", "tax", "politica", "material", "gear", "trade", "navy", "air", "ai", "loop", "save", "setup", "net"].map(f => `src/sim/${f}.ts`);
 const CLIENT = ["icons", "camera", "pixels", "ui", "multi", "render", "boot"].map(f => `src/client/${f}.ts`);
 const join = files => '"use strict";\n' + files.map(f => `// ---- ${f}\n` + fs.readFileSync(f, "utf8")).join("\n");
 const minify = process.argv.includes("--dev") ? false : true;

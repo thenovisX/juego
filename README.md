@@ -28,11 +28,19 @@ Los scripts se cargan en el orden de `index.html`; comparten el mismo espacio gl
 3. `npm start` para probar, `npm run dist` para crear el instalador de Windows.
 Para Steam se usa Steamworks con el paquete `steamworks.js` (logros, nube, multijugador) dentro de Electron.
 
+## Mapas
+Se elige en el menú de inicio (`MAPDATA.maps` en `src/sim/mapdata.ts`, generado por `tools/gen-maps.mjs`):
+- **Tierra** (2000×789, el mundo da la vuelta) y **Mundo gigante** (4000×1578, 6,3 M de casillas, hasta 150 reinos).
+- **Europa y Mediterráneo**, **Las Américas** y **África**: recortes reales con bordes (el mapa no da la vuelta).
+- **Archipiélago** y **Pangea**: procedurales y deterministas (sin datos, se generan con ruido en `src/sim/map.ts`).
+`selectMap(id)` reserva la memoria del mapa elegido (los arrays por casilla se recrean al cambiar de mapa) y las partidas guardadas recuerdan su mapa. `node tools/test-mapas.mjs [id]` genera, simula y guarda/carga cada mapa y mide ms/tick.
+
 ## Pendiente
 Tipos de unidades, tecnología, fuentes locales para jugar sin internet. Multijugador: ver `docs/MULTIJUGADOR.md` (reconectar a media partida, elegir dónde nacer).
 
 ## Desarrollo (TypeScript)
 - Código fuente en `src/`: `src/sim` (simulación, sin DOM: mapa, economía, combate, IA, diplomacia, comercio) y `src/client` (dibujo, interfaz, sonido). La simulación solo habla con el cliente a través de `Hooks` (`src/sim/hooks.ts`), así que un servidor Node puede reutilizarla.
+- Iconos: SVG planos generados por código con `node tools/gen-icons.mjs` (assets/icons/*.svg); edita ese script para cambiarlos.
 - `BUILD.bat` recompila a `dist/game.js` (juego) y `dist/sim.js` (solo simulación), comprueba tipos y ejecuta una partida sin navegador (`tools/test-sim.mjs`).
 - `JUGAR.bat` abre `index.html`, que carga `dist/game.js`; no necesita Node. Node portable está en `tools/` (solo para compilar).
 

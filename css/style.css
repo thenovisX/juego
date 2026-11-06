@@ -116,6 +116,7 @@ button{font:inherit;color:inherit}
 #overlay h1.lose{color:#ff8a7a}
 #overlay .sub{color:var(--muted);line-height:1.5;margin:8px 0 16px}
 #overlay .f{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+#overlay .f label.wide{flex-basis:100%}
 #overlay .f label{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);flex:1;min-width:120px}
 #overlay input,#overlay select{font:inherit;font-size:14px;background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:6px;padding:7px 9px}
 .go{background:linear-gradient(180deg,#f0c56c,#d29d3f);color:#21180a;border:none;font-weight:600;width:100%;padding:11px;font-size:15px;border-radius:8px;cursor:pointer}
@@ -153,7 +154,7 @@ button{font:inherit;color:inherit}
 #top .mats{font-family:var(--f-num);font-size:12px;color:var(--muted);margin-top:2px}
 
 /* iconos del juego (assets/icons) que sustituyen a los emoticonos */
-.ico{ display:inline-block; width:1.15em; height:1.15em; vertical-align:-0.22em; object-fit:contain; }
+.ico{ filter:drop-shadow(0 0 1px rgba(255,255,255,.7)); display:inline-block; width:1.15em; height:1.15em; vertical-align:-0.22em; object-fit:contain; }
 
 /* ===== Rediseño v8: aspecto "mesa de mando" — latón, cristal oscuro, pestañas y tarjetas con relieve ===== */
 :root{
