@@ -1,8 +1,8 @@
 // @ts-nocheck  (cliente: DOM sin tipar de momento)
 // Iconos del juego: en el código los iconos se escriben como {{id}} (p. ej. {{city}}) y aquí se convierten en imágenes
-// de assets/icons/<id>.png. En el DOM se sustituyen en cuanto aparecen (vigilando el árbol); en el canvas se dibujan con drawImage.
+// de assets/icons/<id>.svg. En el DOM se sustituyen en cuanto aparecen (vigilando el árbol); en el canvas se dibujan con drawImage.
 const ICON_IMG = {};
-function icoHTML(id){ return `<img class="ico" src="assets/icons/${id}.png" alt="">`; }
+function icoHTML(id){ return `<img class="ico" src="assets/icons/${id}.svg" alt="">`; }
 function iconize(s){ return String(s).replace(/\{\{(\w+)\}\}/g,(_m,id)=>icoHTML(id)); }
 function iconizeText(t){
   if(!t.parentNode) return;
@@ -27,6 +27,6 @@ function startIcons(){
 }
 function drawIcon(ctx, tok, x, y){
   const id=tok.replace(/\{\{|\}\}/g,""), m=/([\d.]+)px/.exec(ctx.font), px=m?parseFloat(m[1]):16;
-  let im=ICON_IMG[id]; if(!im){ im=new Image(); im.src=`assets/icons/${id}.png`; ICON_IMG[id]=im; }
+  let im=ICON_IMG[id]; if(!im){ im=new Image(); im.src=`assets/icons/${id}.svg`; ICON_IMG[id]=im; }
   if(im.complete && im.naturalWidth) ctx.drawImage(im,x-px/2,y-px/2,px,px);
 }
